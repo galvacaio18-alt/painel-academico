@@ -248,16 +248,19 @@ a{color:var(--accent)}
 
 <script>
 /* =========================================================
-   0. VERIFICAÇÃO DE AMBIENTE
+   0. HELPERS BÁSICOS (MOVIDOS PARA O TOPO PARA EVITAR ERRO)
+   ========================================================= */
+const $ = (s, r=document)=>r.querySelector(s);
+const $$ = (s, r=document)=>[...r.querySelectorAll(s)];
+
+/* =========================================================
+   1. VERIFICAÇÃO DE AMBIENTE E FIREBASE
    ========================================================= */
 if (window.location.protocol === 'file:') {
   document.getElementById('fileWarn').innerHTML = "<b>Atenção:</b> Você está abrindo o arquivo diretamente (file://). O Firebase bloqueia o login assim. Use o Live Server ou hospede (GitHub Pages, Vercel, etc).";
   document.getElementById('fileWarn').classList.remove('hidden');
 }
 
-/* =========================================================
-   1. CONFIGURAÇÃO DO FIREBASE
-   ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyAeItPDazW0k8L8J4XX375o5wXp191ImVk",
   authDomain: "painel-mf.firebaseapp.com",
@@ -641,10 +644,8 @@ $("#btnLogout").onclick = () => {
 };
 
 /* =========================================================
-   5. HELPERS E CÁLCULOS
+   5. CÁLCULOS E LÓGICA
    ========================================================= */
-const $ = (s, r=document)=>r.querySelector(s);
-const $$ = (s, r=document)=>[...r.querySelectorAll(s)];
 const fmt = n => (Math.round(n*100)/100).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
 function hojeISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
 function toDate(iso){ return new Date(iso+"T00:00:00"); }
