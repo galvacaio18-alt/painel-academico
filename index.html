@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Painel Acadêmico – MF/UFAM</title>
-<!-- SDKs do Firebase para Autenticação e Banco de Dados em Tempo Real -->
+<!-- SDKs do Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Bibliotecas para PDF e OCR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 :root{
@@ -20,12 +22,7 @@
 html,body{height:100%}
 body{
   margin:0; font-family:'Segoe UI',system-ui,Arial,sans-serif;
-  background:
-    radial-gradient(circle at 8% 8%, rgba(76,201,240,.16), transparent 38%),
-    radial-gradient(circle at 92% 14%, rgba(247,37,133,.14), transparent 38%),
-    radial-gradient(circle at 50% 92%, rgba(46,204,113,.10), transparent 42%),
-    radial-gradient(circle at 20% 80%, rgba(155,93,229,.12), transparent 40%),
-    var(--bg);
+  background: radial-gradient(circle at 8% 8%, rgba(76,201,240,.16), transparent 38%), radial-gradient(circle at 92% 14%, rgba(247,37,133,.14), transparent 38%), radial-gradient(circle at 50% 92%, rgba(46,204,113,.10), transparent 42%), var(--bg);
   color:var(--txt); min-height:100vh; overflow-x:hidden;
 }
 .fundo-formulas{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
@@ -46,15 +43,9 @@ h3{font-size:15px; color:var(--muted)}
 
 .table-responsive{ width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 10px; border-radius: 8px; }
 
-.card{ position:relative; background: linear-gradient(160deg, rgba(255,255,255,.03), transparent 40%), linear-gradient(160deg,var(--card),var(--card2)); border:1px solid var(--line); border-radius:16px; padding:18px 16px 14px; box-shadow:0 12px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04); overflow:hidden; }
+.card{ position:relative; background: linear-gradient(160deg, rgba(255,255,255,.03), transparent 40%), linear-gradient(160deg,var(--card),var(--card2)); border:1px solid var(--line); border-radius:16px; padding:18px 16px 14px; box-shadow:0 12px 30px rgba(0,0,0,.45); overflow:hidden; }
 .card::before{ content:"∫  ∑  π  φ  λ  Δ  ℏ  ∇×B = μ₀J + μ₀ε₀∂E/∂t  E=mc²"; position:absolute; top:0; left:0; right:0; height:22px; line-height:22px; font-family:'Cambria Math','Times New Roman',serif; font-size:10px; letter-spacing:2px; color:rgba(120,160,255,.10); text-align:center; background:linear-gradient(90deg, transparent, rgba(76,201,240,.08), transparent); border-bottom:1px solid rgba(76,201,240,.08); }
 .card::after{ content:"∑"; position:absolute; right:10px; bottom:6px; font-family:'Cambria Math',serif; font-size:42px; color:rgba(76,201,240,.05); pointer-events:none; }
-.card.ornament::before{content:"∂  ∇  ∞  θ  ω  √  ±  ≈  ≠  ≤  ≥  ⇒  ⇔  ∈  ⊂  ∪  ∩"}
-.card.cr::before{content:"CR = Σ(nota×CH) / Σ(CH)  x̄ = (Σxi)/n  σ² = Σ(xi-x̄)²/n"}
-.card.cal::before{content:"Δt  T  f=1/T  ω=2πf  v=λf  E=hf"}
-.card.pre::before{content:"A ⇒ B  A ⊂ B  A ∩ B = ∅  ∀  ∃  ¬  ∧  ∨"}
-.card.sim::before{content:"Σc ≤ 28  ∀x ∈ grade  pré(x) ⊂ concluídas"}
-.card.imp::before{content:"OCR  f(x)  ∂  ∫  Σ  π  Δ"}
 
 .grid{display:grid; gap:16px}
 .cols-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
@@ -66,8 +57,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent); box-shadow:0
 button{ background:linear-gradient(135deg,#1f6feb,#4cc9f0); border:none; cursor:pointer; font-weight:700; letter-spacing:.2px; box-shadow:0 6px 18px rgba(31,111,235,.35); padding: 12px 16px; }
 button:active{transform:translateY(1px)}
 button.ghost{background:transparent; border:1px solid var(--line); color:var(--muted); box-shadow:none}
-button.danger{background:linear-gradient(135deg,#c0392b,#e74c3c); box-shadow:0 6px 18px rgba(231,76,60,.3)}
-button.ok{background:linear-gradient(135deg,#1e8449,#2ecc71); box-shadow:0 6px 18px rgba(46,204,113,.3)}
+button.danger{background:linear-gradient(135deg,#c0392b,#e74c3c);}
+button.ok{background:linear-gradient(135deg,#1e8449,#2ecc71);}
 
 .tabs{display:flex; gap:8px; flex-wrap:wrap; margin:18px 0; padding-bottom:5px;}
 .tab{ padding:10px 16px; border-radius:999px; cursor:pointer; font-size:13px; font-weight:600; border:1px solid var(--line); background:#0a1228; color:var(--muted); transition:.18s; user-select:none; white-space:nowrap; }
@@ -104,14 +95,11 @@ tbody tr:hover td{background:rgba(76,201,240,.07)}
 
 .section-title{display:flex; align-items:center; gap:12px; margin-bottom:10px}
 .section-title .ico{ font-size:20px; background:rgba(76,201,240,0.15); padding:8px; border-radius:10px; border:1px solid rgba(76,201,240,0.3); box-shadow:0 0 10px rgba(76,201,240,0.2); }
-.atomo{ position:relative; width:46px; height:46px; flex:0 0 auto; display:inline-block; background:rgba(76,201,240,0.1); border-radius:50%; box-shadow:0 0 20px rgba(76,201,240,0.4), inset 0 0 15px rgba(76,201,240,0.2); border:1px solid rgba(76,201,240,0.3); }
+.atomo{ position:relative; width:46px; height:46px; flex:0 0 auto; display:inline-block; background:rgba(76,201,240,0.1); border-radius:50%; box-shadow:0 0 20px rgba(76,201,240,0.4); border:1px solid rgba(76,201,240,0.3); }
 .atomo .nucleo{ position:absolute; inset:0; margin:auto; width:12px; height:12px; border-radius:50%; background:radial-gradient(circle,#fff,#4cc9f0 60%,#1f6feb); box-shadow:0 0 15px #4cc9f0; z-index:2; }
 .atomo .anel{position:absolute; inset:6px; border:2px solid rgba(76,201,240,.7); border-radius:50%;}
-.atomo .anel.a1{transform:rotate(0deg)}
-.atomo .anel.a2{transform:rotate(60deg)}
-.atomo .anel.a3{transform:rotate(120deg)}
-.atomo{animation:girarAtomo 8s linear infinite}
-@keyframes girarAtomo{to{transform:rotate(360deg)}}
+.atomo .anel.a1{transform:rotate(0deg)} .atomo .anel.a2{transform:rotate(60deg)} .atomo .anel.a3{transform:rotate(120deg)}
+.atomo{animation:girarAtomo 8s linear infinite} @keyframes girarAtomo{to{transform:rotate(360deg)}}
 
 .onda{ width:100%; height:36px; margin-top:10px; position:relative; overflow:hidden; border-radius:8px; background:rgba(76,201,240,.04); border:1px solid rgba(76,201,240,.10); }
 .onda svg{width:100%; height:100%; display:block}
@@ -171,7 +159,6 @@ a{color:var(--accent)}
 </head>
 <body>
 
-<!-- Fundo de fórmulas -->
 <div class="fundo-formulas" aria-hidden="true">
   <span style="top:4%;left:3%;font-size:20px">E = mc²</span>
   <span style="top:12%;left:78%;font-size:26px">∫ e^{-x²} dx = √π</span>
@@ -187,7 +174,7 @@ a{color:var(--accent)}
 <div class="orbita o1"></div>
 <div class="orbita o2"></div>
 
-<!-- ================= LOGIN (FIREBASE) ================= -->
+<!-- ================= LOGIN ================= -->
 <div id="authView" class="auth">
   <div class="card ornament">
     <div class="section-title">
@@ -198,9 +185,7 @@ a{color:var(--accent)}
       </div>
     </div>
     <div id="loginBox">
-      <div id="fileWarn" class="alert danger hidden">
-        <b>Atenção:</b> Domínio não autorizado no Firebase.
-      </div>
+      <div id="fileWarn" class="alert danger hidden"><b>Atenção:</b> Domínio não autorizado no Firebase.</div>
       <label class="label">E-mail</label>
       <input id="inEmail" type="email" placeholder="seu@email.com" style="margin:6px 0 12px">
       <label class="label">Senha</label>
@@ -230,13 +215,11 @@ a{color:var(--accent)}
       <div id="regMsg" class="small" style="margin-top:10px;color:var(--danger); text-align:center; font-weight:bold;"></div>
     </div>
     
-    <div class="deco">
-      <span>∑</span><span>∫</span><span>π</span><span>φ</span><span>λ</span><span>Δ</span><span>ℏ</span><span>∇</span><span>∞</span>
-    </div>
+    <div class="deco"><span>∑</span><span>∫</span><span>π</span><span>φ</span><span>λ</span><span>Δ</span><span>ℏ</span><span>∇</span><span>∞</span></div>
   </div>
 </div>
 
-<!-- ================= ONBOARDING (NOVO USUÁRIO) ================= -->
+<!-- ================= ONBOARDING ================= -->
 <div id="onboardingView" class="auth hidden">
   <div class="card ornament">
     <div class="section-title">
@@ -294,9 +277,6 @@ a{color:var(--accent)}
 <div id="toast" class="toast hidden"></div>
 
 <script>
-/* =========================================================
-   0. HELPERS BÁSICOS
-   ========================================================= */
 const $ = (s, r=document)=>r.querySelector(s);
 const $$ = (s, r=document)=>[...r.querySelectorAll(s)];
 
@@ -305,9 +285,9 @@ if (window.location.protocol === 'file:') {
   document.getElementById('fileWarn').classList.remove('hidden');
 }
 
-/* =========================================================
-   1. CONFIGURAÇÃO DO FIREBASE
-   ========================================================= */
+// Inicializa o PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyAeItPDazW0k8L8J4XX375o5wXp191ImVk",
   authDomain: "painel-mf.firebaseapp.com",
@@ -322,140 +302,34 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
-  console.warn("Persistência offline indisponível:", err.code);
-});
+db.enablePersistence({ synchronizeTabs: true }).catch((err) => { console.warn("Persistência offline indisponível:", err.code); });
 
-/* =========================================================
-   2. DADOS BASE
-   ========================================================= */
 const CH_TOTAL = 3620;
 const CH_OBRIG = 3240;
 const DISCIPLINAS_POR_SEMESTRE = 4;
 const MAX_CREDITOS = 28;
 
-const ALUNO = {
-  nome: "Caio Pereira Galvão",
-  matricula: "22450527",
-  curso: "IT04 – Ciências – Matemática e Física",
-  versao: "IT04/2007-2",
-  ingresso: "2024/1",
-  situacao: "Sem Evasão",
-  campus: "Campus de Itacoatiara",
-  turno: "Noturno",
-  formaIngresso: "SISU – AC (Ampla Concorrência)"
-};
+const ALUNO = { nome: "Caio Pereira Galvão", matricula: "22450527", curso: "IT04 – Ciências – Matemática e Física", versao: "IT04/2007-2", ingresso: "2024/1", situacao: "Sem Evasão", campus: "Campus de Itacoatiara", turno: "Noturno", formaIngresso: "SISU – AC (Ampla Concorrência)" };
 
 const OBRIGATORIAS = [
-  {cod:"ITA122", nome:"Metodologia da Pesquisa I", cred:3, ch:45, per:1, pre:[]},
-  {cod:"ITA130", nome:"Fundamentos de Física I", cred:4, ch:60, per:1, pre:[]},
-  {cod:"ITA201", nome:"Português Instrumental", cred:4, ch:60, per:1, pre:[]},
-  {cod:"ITM002", nome:"Matemática Elementar II", cred:4, ch:60, per:1, pre:[]},
-  {cod:"ITM161", nome:"Matemática Elementar I", cred:4, ch:60, per:1, pre:[]},
-  {cod:"ITS033", nome:"Fundamentos de Informática", cred:3, ch:30, per:1, pre:[]},
-  {cod:"ITA104", nome:"Cálculo I", cred:6, ch:90, per:2, pre:["ITM161"]},
-  {cod:"ITA131", nome:"Fundamentos de Física II", cred:4, ch:60, per:2, pre:["ITA130"]},
-  {cod:"ITA204", nome:"Introdução a Filosofia", cred:4, ch:60, per:2, pre:[]},
-  {cod:"ITM018", nome:"Fundamentos de Geometria", cred:6, ch:90, per:2, pre:[]},
-  {cod:"ITM022", nome:"Matemática Elementar III", cred:4, ch:60, per:2, pre:[]},
-  {cod:"ITA115", nome:"Cálculo II", cred:6, ch:90, per:3, pre:["ITA104"]},
-  {cod:"ITA127", nome:"Física Experimental I", cred:1, ch:30, per:3, pre:["ITA130"]},
-  {cod:"ITM004", nome:"Geometria Analítica", cred:4, ch:60, per:3, pre:["ITM161"]},
-  {cod:"ITM021", nome:"Prática Curricular I", cred:4, ch:90, per:3, pre:[]},
-  {cod:"ITM101", nome:"Física I", cred:6, ch:90, per:3, pre:["ITA130"]},
-  {cod:"ITA128", nome:"Física Experimental II", cred:1, ch:30, per:4, pre:["ITA127"]},
-  {cod:"ITM005", nome:"Álgebra Linear I", cred:4, ch:60, per:4, pre:[]},
-  {cod:"ITM019", nome:"Cálculo III", cred:6, ch:90, per:4, pre:["ITA115"]},
-  {cod:"ITM201", nome:"Física II", cred:6, ch:90, per:4, pre:["ITM101"]},
-  {cod:"ITM802", nome:"Prática Curricular II", cred:4, ch:90, per:4, pre:["ITM021"]},
-  {cod:"ITA120", nome:"Equações Diferenciais Ordinárias", cred:4, ch:60, per:5, pre:["ITA104"]},
-  {cod:"ITA208", nome:"Psicologia da Educação", cred:6, ch:90, per:5, pre:[]},
-  {cod:"ITM301", nome:"Física III", cred:6, ch:90, per:5, pre:["ITM201"]},
-  {cod:"ITM302", nome:"Física Experimental III", cred:1, ch:30, per:5, pre:["ITA128"]},
-  {cod:"ITM803", nome:"Prática Curricular III", cred:4, ch:90, per:5, pre:["ITM802"]},
-  {cod:"ITA118", nome:"Probabilidade e Estatística", cred:4, ch:60, per:6, pre:["ITM161"]},
-  {cod:"ITA203", nome:"Sociologia Geral", cred:4, ch:60, per:6, pre:[]},
-  {cod:"ITA207", nome:"Legislação do Ensino Básico", cred:4, ch:60, per:6, pre:[]},
-  {cod:"ITA209", nome:"Didática Geral", cred:4, ch:60, per:6, pre:[]},
-  {cod:"ITM401", nome:"Física IV", cred:5, ch:90, per:6, pre:["ITM301"]},
-  {cod:"ITA210", nome:"Inglês Instrumental", cred:4, ch:60, per:7, pre:[]},
-  {cod:"ITM009", nome:"Mecânica Clássica", cred:4, ch:60, per:7, pre:["ITA115"]},
-  {cod:"ITM702", nome:"Laboratório para o Ensino da Matemática", cred:3, ch:60, per:7, pre:["ITM101"]},
-  {cod:"ITM901", nome:"Estágio Supervisionado I", cred:4, ch:90, per:7, pre:["ITM018"]},
-  {cod:"ITQ101", nome:"Química Geral I", cred:4, ch:60, per:7, pre:["ITM161"]},
-  {cod:"ITM008", nome:"Fundamentos de Álgebra", cred:4, ch:60, per:8, pre:[]},
-  {cod:"ITM012", nome:"Termodinâmica", cred:4, ch:60, per:8, pre:["ITA115","ITM201"]},
-  {cod:"ITM701", nome:"Laboratório para o Ensino da Física", cred:3, ch:60, per:8, pre:["ITA130","ITA131"]},
-  {cod:"ITM902", nome:"Estágio Supervisionado II", cred:5, ch:120, per:8, pre:["ITM018","ITM161","ITM901"]},
-  {cod:"ITM010", nome:"Fundamentos de Análise", cred:4, ch:60, per:9, pre:["ITA115"]},
-  {cod:"ITM011", nome:"Física Moderna I", cred:4, ch:60, per:9, pre:["ITA120","ITM401"]},
-  {cod:"ITM015", nome:"Educação Inclusiva", cred:3, ch:60, per:9, pre:[]},
-  {cod:"ITM903", nome:"Estágio Supervisionado III", cred:5, ch:105, per:9, pre:["ITA130","ITA131","ITM901"]},
-  {cod:"ITM016", nome:"Eletromagnetismo", cred:4, ch:60, per:10, pre:["ITM019","ITM301"]},
-  {cod:"ITM500", nome:"Libras", cred:4, ch:60, per:10, pre:[]},
-  {cod:"ITM904", nome:"Estágio Supervisionado IV", cred:4, ch:90, per:10, pre:["ITM902","ITM903"]},
-  {cod:"ENADE02", nome:"ENADE – Concluinte", cred:0, ch:0, per:10, pre:[]}
+  {cod:"ITA122", nome:"Metodologia da Pesquisa I", cred:3, ch:45, per:1, pre:[]}, {cod:"ITA130", nome:"Fundamentos de Física I", cred:4, ch:60, per:1, pre:[]}, {cod:"ITA201", nome:"Português Instrumental", cred:4, ch:60, per:1, pre:[]}, {cod:"ITM002", nome:"Matemática Elementar II", cred:4, ch:60, per:1, pre:[]}, {cod:"ITM161", nome:"Matemática Elementar I", cred:4, ch:60, per:1, pre:[]}, {cod:"ITS033", nome:"Fundamentos de Informática", cred:3, ch:30, per:1, pre:[]},
+  {cod:"ITA104", nome:"Cálculo I", cred:6, ch:90, per:2, pre:["ITM161"]}, {cod:"ITA131", nome:"Fundamentos de Física II", cred:4, ch:60, per:2, pre:["ITA130"]}, {cod:"ITA204", nome:"Introdução a Filosofia", cred:4, ch:60, per:2, pre:[]}, {cod:"ITM018", nome:"Fundamentos de Geometria", cred:6, ch:90, per:2, pre:[]}, {cod:"ITM022", nome:"Matemática Elementar III", cred:4, ch:60, per:2, pre:[]},
+  {cod:"ITA115", nome:"Cálculo II", cred:6, ch:90, per:3, pre:["ITA104"]}, {cod:"ITA127", nome:"Física Experimental I", cred:1, ch:30, per:3, pre:["ITA130"]}, {cod:"ITM004", nome:"Geometria Analítica", cred:4, ch:60, per:3, pre:["ITM161"]}, {cod:"ITM021", nome:"Prática Curricular I", cred:4, ch:90, per:3, pre:[]}, {cod:"ITM101", nome:"Física I", cred:6, ch:90, per:3, pre:["ITA130"]},
+  {cod:"ITA128", nome:"Física Experimental II", cred:1, ch:30, per:4, pre:["ITA127"]}, {cod:"ITM005", nome:"Álgebra Linear I", cred:4, ch:60, per:4, pre:[]}, {cod:"ITM019", nome:"Cálculo III", cred:6, ch:90, per:4, pre:["ITA115"]}, {cod:"ITM201", nome:"Física II", cred:6, ch:90, per:4, pre:["ITM101"]}, {cod:"ITM802", nome:"Prática Curricular II", cred:4, ch:90, per:4, pre:["ITM021"]},
+  {cod:"ITA120", nome:"Equações Diferenciais Ordinárias", cred:4, ch:60, per:5, pre:["ITA104"]}, {cod:"ITA208", nome:"Psicologia da Educação", cred:6, ch:90, per:5, pre:[]}, {cod:"ITM301", nome:"Física III", cred:6, ch:90, per:5, pre:["ITM201"]}, {cod:"ITM302", nome:"Física Experimental III", cred:1, ch:30, per:5, pre:["ITA128"]}, {cod:"ITM803", nome:"Prática Curricular III", cred:4, ch:90, per:5, pre:["ITM802"]},
+  {cod:"ITA118", nome:"Probabilidade e Estatística", cred:4, ch:60, per:6, pre:["ITM161"]}, {cod:"ITA203", nome:"Sociologia Geral", cred:4, ch:60, per:6, pre:[]}, {cod:"ITA207", nome:"Legislação do Ensino Básico", cred:4, ch:60, per:6, pre:[]}, {cod:"ITA209", nome:"Didática Geral", cred:4, ch:60, per:6, pre:[]}, {cod:"ITM401", nome:"Física IV", cred:5, ch:90, per:6, pre:["ITM301"]},
+  {cod:"ITA210", nome:"Inglês Instrumental", cred:4, ch:60, per:7, pre:[]}, {cod:"ITM009", nome:"Mecânica Clássica", cred:4, ch:60, per:7, pre:["ITA115"]}, {cod:"ITM702", nome:"Laboratório para o Ensino da Matemática", cred:3, ch:60, per:7, pre:["ITM101"]}, {cod:"ITM901", nome:"Estágio Supervisionado I", cred:4, ch:90, per:7, pre:["ITM018"]}, {cod:"ITQ101", nome:"Química Geral I", cred:4, ch:60, per:7, pre:["ITM161"]},
+  {cod:"ITM008", nome:"Fundamentos de Álgebra", cred:4, ch:60, per:8, pre:[]}, {cod:"ITM012", nome:"Termodinâmica", cred:4, ch:60, per:8, pre:["ITA115","ITM201"]}, {cod:"ITM701", nome:"Laboratório para o Ensino da Física", cred:3, ch:60, per:8, pre:["ITA130","ITA131"]}, {cod:"ITM902", nome:"Estágio Supervisionado II", cred:5, ch:120, per:8, pre:["ITM018","ITM161","ITM901"]},
+  {cod:"ITM010", nome:"Fundamentos de Análise", cred:4, ch:60, per:9, pre:["ITA115"]}, {cod:"ITM011", nome:"Física Moderna I", cred:4, ch:60, per:9, pre:["ITA120","ITM401"]}, {cod:"ITM015", nome:"Educação Inclusiva", cred:3, ch:60, per:9, pre:[]}, {cod:"ITM903", nome:"Estágio Supervisionado III", cred:5, ch:105, per:9, pre:["ITA130","ITA131","ITM901"]},
+  {cod:"ITM016", nome:"Eletromagnetismo", cred:4, ch:60, per:10, pre:["ITM019","ITM301"]}, {cod:"ITM500", nome:"Libras", cred:4, ch:60, per:10, pre:[]}, {cod:"ITM904", nome:"Estágio Supervisionado IV", cred:4, ch:90, per:10, pre:["ITM902","ITM903"]}, {cod:"ENADE02", nome:"ENADE – Concluinte", cred:0, ch:0, per:10, pre:[]}
 ];
 
 const OPTATIVAS = [
-  {cod:"ITE011", nome:"Métodos Numéricos", cred:3, ch:60},
-  {cod:"ITE056", nome:"Gestão de Pessoas", cred:3, ch:45},
-  {cod:"ITM013", nome:"Probabilidade I", cred:4, ch:60},
-  {cod:"ITM014", nome:"Probabilidade II", cred:4, ch:60},
-  {cod:"ITM024", nome:"Trigonometria", cred:4, ch:60},
-  {cod:"ITM025", nome:"Álgebra Linear II", cred:4, ch:60},
-  {cod:"ITM026", nome:"Análise Real", cred:4, ch:60},
-  {cod:"ITM027", nome:"Desenho Geométrico", cred:4, ch:60},
-  {cod:"ITM028", nome:"História da Educação Brasileira e Amazônia", cred:4, ch:60},
-  {cod:"ITM029", nome:"Informática Aplicada à Educação", cred:4, ch:60},
-  {cod:"ITM030", nome:"Pesquisa e Prática na Educação", cred:4, ch:60},
-  {cod:"ITM031", nome:"Mecânica Quântica", cred:4, ch:60},
-  {cod:"ITM032", nome:"Introdução à Física do Estado Sólido", cred:4, ch:60},
-  {cod:"ITM033", nome:"Tópicos Especiais de Matemática", cred:4, ch:60},
-  {cod:"ITM052", nome:"Física Moderna II", cred:3, ch:60},
-  {cod:"ITM053", nome:"Fundamentos de Astronomia e Astrofísica", cred:4, ch:60},
-  {cod:"ITM054", nome:"Física Matemática", cred:4, ch:60},
-  {cod:"ITM055", nome:"Mecânica Analítica", cred:4, ch:60},
-  {cod:"ITM056", nome:"Física Estatística", cred:4, ch:60},
-  {cod:"ITM057", nome:"Variáveis Complexas", cred:4, ch:60},
-  {cod:"ITM058", nome:"Espaços Métricos", cred:4, ch:60},
-  {cod:"ITM059", nome:"Geometria Diferencial", cred:4, ch:60},
-  {cod:"ITM060", nome:"Física, Matemática e Sociedade", cred:3, ch:60},
-  {cod:"ITM061", nome:"Modelagem Matemática", cred:4, ch:60},
-  {cod:"ITM410", nome:"História da Física", cred:3, ch:60},
-  {cod:"ITM800", nome:"História da Matemática", cred:4, ch:60},
-  {cod:"ITS051", nome:"Matemática Discreta", cred:4, ch:60},
-  {cod:"ITC020", nome:"Probabilidade e Estatística (Optativa)", cred:4, ch:60}
+  {cod:"ITE011", nome:"Métodos Numéricos", cred:3, ch:60}, {cod:"ITE056", nome:"Gestão de Pessoas", cred:3, ch:45}, {cod:"ITM013", nome:"Probabilidade I", cred:4, ch:60}, {cod:"ITM014", nome:"Probabilidade II", cred:4, ch:60}, {cod:"ITM024", nome:"Trigonometria", cred:4, ch:60}, {cod:"ITM025", nome:"Álgebra Linear II", cred:4, ch:60}, {cod:"ITM026", nome:"Análise Real", cred:4, ch:60}, {cod:"ITM027", nome:"Desenho Geométrico", cred:4, ch:60}, {cod:"ITM028", nome:"História da Educação Brasileira e Amazônia", cred:4, ch:60}, {cod:"ITM029", nome:"Informática Aplicada à Educação", cred:4, ch:60}, {cod:"ITM030", nome:"Pesquisa e Prática na Educação", cred:4, ch:60}, {cod:"ITM031", nome:"Mecânica Quântica", cred:4, ch:60}, {cod:"ITM032", nome:"Introdução à Física do Estado Sólido", cred:4, ch:60}, {cod:"ITM033", nome:"Tópicos Especiais de Matemática", cred:4, ch:60}, {cod:"ITM052", nome:"Física Moderna II", cred:3, ch:60}, {cod:"ITM053", nome:"Fundamentos de Astronomia e Astrofísica", cred:4, ch:60}, {cod:"ITM054", nome:"Física Matemática", cred:4, ch:60}, {cod:"ITM055", nome:"Mecânica Analítica", cred:4, ch:60}, {cod:"ITM056", nome:"Física Estatística", cred:4, ch:60}, {cod:"ITM057", nome:"Variáveis Complexas", cred:4, ch:60}, {cod:"ITM058", nome:"Espaços Métricos", cred:4, ch:60}, {cod:"ITM059", nome:"Geometria Diferencial", cred:4, ch:60}, {cod:"ITM060", nome:"Física, Matemática e Sociedade", cred:3, ch:60}, {cod:"ITM061", nome:"Modelagem Matemática", cred:4, ch:60}, {cod:"ITM410", nome:"História da Física", cred:3, ch:60}, {cod:"ITM800", nome:"História da Matemática", cred:4, ch:60}, {cod:"ITS051", nome:"Matemática Discreta", cred:4, ch:60}, {cod:"ITC020", nome:"Probabilidade e Estatística (Optativa)", cred:4, ch:60}
 ];
 
 const CALENDARIO = [
-  {data:"2026-02-20", fim:"2026-02-24", titulo:"1ª solicitação de matrícula 2026/1", tipo:"matricula"},
-  {data:"2026-02-26", titulo:"Resultado da 1ª matrícula 2026/1", tipo:"resultado"},
-  {data:"2026-03-02", fim:"2026-03-04", titulo:"2ª solicitação de matrícula 2026/1", tipo:"matricula"},
-  {data:"2026-03-09", titulo:"Início do período letivo 2026/1", tipo:"aula"},
-  {data:"2026-03-11", fim:"2026-03-16", titulo:"3ª solicitação de matrícula 2026/1", tipo:"matricula"},
-  {data:"2026-03-20", fim:"2026-03-24", titulo:"Recursos de matrícula 2026/1", tipo:"recurso"},
-  {data:"2026-04-03", titulo:"Sexta-Feira Santa (feriado)", tipo:"feriado"},
-  {data:"2026-04-21", titulo:"Tiradentes (feriado)", tipo:"feriado"},
-  {data:"2026-04-25", titulo:"Aniversário de Itacoatiara (feriado municipal)", tipo:"feriado"},
-  {data:"2026-05-01", titulo:"Dia do Trabalho (feriado)", tipo:"feriado"},
-  {data:"2026-05-25", fim:"2026-06-19", titulo:"Solicitação de colação de grau 2026/1", tipo:"formatura"},
-  {data:"2026-06-15", fim:"2026-06-26", titulo:"Trancamento de curso 2026/2", tipo:"trancamento"},
-  {data:"2026-07-09", titulo:"Fim do período letivo 2026/1", tipo:"aula"},
-  {data:"2026-07-10", fim:"2026-07-15", titulo:"Exames finais 2026/1", tipo:"prova"},
-  {data:"2026-07-20", fim:"2026-07-24", titulo:"1ª solicitação de matrícula 2026/2", tipo:"matricula"},
-  {data:"2026-08-04", fim:"2026-08-07", titulo:"2ª solicitação de matrícula 2026/2", tipo:"matricula"},
-  {data:"2026-08-10", titulo:"Início do período letivo 2026/2", tipo:"aula"},
-  {data:"2026-08-11", fim:"2026-08-15", titulo:"3ª solicitação de matrícula 2026/2", tipo:"matricula"},
-  {data:"2026-08-31", fim:"2026-09-04", titulo:"Trancamento de disciplinas 2026/2", tipo:"trancamento"},
-  {data:"2026-09-07", titulo:"Independência do Brasil (feriado)", tipo:"feriado"},
-  {data:"2026-10-12", titulo:"Nossa Senhora Aparecida (feriado)", tipo:"feriado"},
-  {data:"2026-10-26", fim:"2026-11-20", titulo:"Solicitação de colação de grau 2026/2", tipo:"formatura"},
-  {data:"2026-11-02", titulo:"Finados (feriado)", tipo:"feriado"},
-  {data:"2026-11-15", titulo:"Proclamação da República (feriado)", tipo:"feriado"},
-  {data:"2026-11-20", titulo:"Consciência Negra (feriado)", tipo:"feriado"},
-  {data:"2026-12-12", titulo:"Fim do período letivo 2026/2", tipo:"aula"},
-  {data:"2026-12-14", fim:"2026-12-18", titulo:"Exames finais 2026/2", tipo:"prova"}
+  {data:"2026-02-20", fim:"2026-02-24", titulo:"1ª solicitação de matrícula 2026/1", tipo:"matricula"}, {data:"2026-02-26", titulo:"Resultado da 1ª matrícula 2026/1", tipo:"resultado"}, {data:"2026-03-02", fim:"2026-03-04", titulo:"2ª solicitação de matrícula 2026/1", tipo:"matricula"}, {data:"2026-03-09", titulo:"Início do período letivo 2026/1", tipo:"aula"}, {data:"2026-03-11", fim:"2026-03-16", titulo:"3ª solicitação de matrícula 2026/1", tipo:"matricula"}, {data:"2026-03-20", fim:"2026-03-24", titulo:"Recursos de matrícula 2026/1", tipo:"recurso"}, {data:"2026-04-03", titulo:"Sexta-Feira Santa (feriado)", tipo:"feriado"}, {data:"2026-04-21", titulo:"Tiradentes (feriado)", tipo:"feriado"}, {data:"2026-04-25", titulo:"Aniversário de Itacoatiara (feriado municipal)", tipo:"feriado"}, {data:"2026-05-01", titulo:"Dia do Trabalho (feriado)", tipo:"feriado"}, {data:"2026-05-25", fim:"2026-06-19", titulo:"Solicitação de colação de grau 2026/1", tipo:"formatura"}, {data:"2026-06-15", fim:"2026-06-26", titulo:"Trancamento de curso 2026/2", tipo:"trancamento"}, {data:"2026-07-09", titulo:"Fim do período letivo 2026/1", tipo:"aula"}, {data:"2026-07-10", fim:"2026-07-15", titulo:"Exames finais 2026/1", tipo:"prova"}, {data:"2026-07-20", fim:"2026-07-24", titulo:"1ª solicitação de matrícula 2026/2", tipo:"matricula"}, {data:"2026-08-04", fim:"2026-08-07", titulo:"2ª solicitação de matrícula 2026/2", tipo:"matricula"}, {data:"2026-08-10", titulo:"Início do período letivo 2026/2", tipo:"aula"}, {data:"2026-08-11", fim:"2026-08-15", titulo:"3ª solicitação de matrícula 2026/2", tipo:"matricula"}, {data:"2026-08-31", fim:"2026-09-04", titulo:"Trancamento de disciplinas 2026/2", tipo:"trancamento"}, {data:"2026-09-07", titulo:"Independência do Brasil (feriado)", tipo:"feriado"}, {data:"2026-10-12", titulo:"Nossa Senhora Aparecida (feriado)", tipo:"feriado"}, {data:"2026-10-26", fim:"2026-11-20", titulo:"Solicitação de colação de grau 2026/2", tipo:"formatura"}, {data:"2026-11-02", titulo:"Finados (feriado)", tipo:"feriado"}, {data:"2026-11-15", titulo:"Proclamação da República (feriado)", tipo:"feriado"}, {data:"2026-11-20", titulo:"Consciência Negra (feriado)", tipo:"feriado"}, {data:"2026-12-12", titulo:"Fim do período letivo 2026/2", tipo:"aula"}, {data:"2026-12-14", fim:"2026-12-18", titulo:"Exames finais 2026/2", tipo:"prova"}
 ];
 
 const CONTEUDOS_INICIAIS = [
@@ -469,9 +343,6 @@ const CONTEUDOS_INICIAIS = [
   {disc:"Equações Diferenciais", tipo:"Livro", titulo:"Zill – Equações Diferenciais", link:"https://www.google.com/search?q=zill+equações+diferenciais+pdf"}
 ];
 
-/* =========================================================
-   3. ESTADO E SINCRONIZAÇÃO FIREBASE
-   ========================================================= */
 let state = {
   disciplinas: {},
   horarios: {},
@@ -482,7 +353,7 @@ let state = {
   conteudos: [],
   atividades: [],
   config: {},
-  onboardingConcluido: false // Controle de novo usuário
+  onboardingConcluido: false 
 };
 
 let currentUser = null;
@@ -490,84 +361,39 @@ let unsubscribeSnapshot = null;
 
 function estadoInicialCaio(){
   const disc = {};
-  OBRIGATORIAS.concat(OPTATIVAS).forEach(d=>{
-    disc[d.cod] = {status:"pendente", nota:null, semestre:null, statusHist:"", rp:false};
-  });
-
-  const setD = (cod, st, nota, sem, hist, rp) => {
-    if(disc[cod]) disc[cod] = {status: st, nota: nota, semestre: sem, statusHist: hist, rp: rp};
-  };
-
-  setD("ITA122", "concluida", 2.06, "2024/1", "Repro Nota", true);
-  setD("ITA130", "concluida", 0.00, "2024/1", "Repro Nota", true);
-  setD("ITM002", "concluida", 0.74, "2024/1", "Repro Nota", true);
-  setD("ITM161", "concluida", 1.47, "2024/1", "Repro Nota", true);
-  setD("ITS033", "concluida", 3.23, "2024/1", "Repro Freq", true);
-  setD("ITA201", "concluida", 0.00, "2024/2", "Repro Nota", true);
-  setD("ITA208", "concluida", 0.00, "2024/2", "Repro Nota", true);
-  setD("ITM060", "concluida", 0.00, "2024/2", "Repro Freq", true);
+  OBRIGATORIAS.concat(OPTATIVAS).forEach(d=>{ disc[d.cod] = {status:"pendente", nota:null, semestre:null, statusHist:"", rp:false}; });
+  const setD = (cod, st, nota, sem, hist, rp) => { if(disc[cod]) disc[cod] = {status: st, nota: nota, semestre: sem, statusHist: hist, rp: rp}; };
+  setD("ITA122", "concluida", 2.06, "2024/1", "Repro Nota", true); setD("ITA130", "concluida", 0.00, "2024/1", "Repro Nota", true); setD("ITM002", "concluida", 0.74, "2024/1", "Repro Nota", true); setD("ITM161", "concluida", 1.47, "2024/1", "Repro Nota", true); setD("ITS033", "concluida", 3.23, "2024/1", "Repro Freq", true);
+  setD("ITA201", "concluida", 0.00, "2024/2", "Repro Nota", true); setD("ITA208", "concluida", 0.00, "2024/2", "Repro Nota", true); setD("ITM060", "concluida", 0.00, "2024/2", "Repro Freq", true);
   setD("ITM002", "concluida", 7.22, "2024/2 (Férias)", "Aprovado", false); 
-  setD("ITA122", "concluida", 6.00, "2025/1", "Aprovado", false); 
-  setD("ITA130", "concluida", 7.33, "2025/1", "Aprovado", false); 
-  setD("ITM021", "concluida", 9.25, "2025/1", "Aprovado", false);
-  setD("ITM161", "concluida", 5.17, "2025/1", "Aprovado", false); 
-  setD("ITC020", "concluida", 9.32, "2025/1", "Aprovado", false);
-  setD("ITA104", "concluida", 0.00, "2025/2", "Repro Freq", true);
-  setD("ITM018", "concluida", 8.00, "2025/2", "Aprovado", false);
-  setD("ITM802", "concluida", 6.44, "2025/2", "Aprovado", false);
-  setD("ITQ101", "concluida", 1.00, "2025/2", "Repro Freq", true);
+  setD("ITA122", "concluida", 6.00, "2025/1", "Aprovado", false); setD("ITA130", "concluida", 7.33, "2025/1", "Aprovado", false); setD("ITM021", "concluida", 9.25, "2025/1", "Aprovado", false); setD("ITM161", "concluida", 5.17, "2025/1", "Aprovado", false); setD("ITC020", "concluida", 9.32, "2025/1", "Aprovado", false);
+  setD("ITA104", "concluida", 0.00, "2025/2", "Repro Freq", true); setD("ITM018", "concluida", 8.00, "2025/2", "Aprovado", false); setD("ITM802", "concluida", 6.44, "2025/2", "Aprovado", false); setD("ITQ101", "concluida", 1.00, "2025/2", "Repro Freq", true);
   setD("ITA131", "concluida", 7.25, "2025/2 (Férias)", "Aprovado", false);
-  setD("ITA104", "concluida", 0.67, "2026/1", "Repro Nota", true); 
-  setD("ITA127", "concluida", 9.00, "2026/1", "Aprovado", false);
-  setD("ITM004", "concluida", 1.24, "2026/1", "Repro Nota", true);
-  setD("ITM101", "concluida", 0.00, "2026/1", "Repro Freq", true);
-  setD("ITA104", "cursando", null, "2026/2", "Matrícula", false); 
-  setD("ITA128", "cursando", null, "2026/2", "Matrícula", false);
-  setD("ITA208", "cursando", null, "2026/2", "Matrícula", false); 
-  setD("ITA209", "cursando", null, "2026/2", "Matrícula", false);
-  setD("ITM022", "cursando", null, "2026/2", "Matrícula", false);
+  setD("ITA104", "concluida", 0.67, "2026/1", "Repro Nota", true); setD("ITA127", "concluida", 9.00, "2026/1", "Aprovado", false); setD("ITM004", "concluida", 1.24, "2026/1", "Repro Nota", true); setD("ITM101", "concluida", 0.00, "2026/1", "Repro Freq", true);
+  setD("ITA104", "cursando", null, "2026/2", "Matrícula", false); setD("ITA128", "cursando", null, "2026/2", "Matrícula", false); setD("ITA208", "cursando", null, "2026/2", "Matrícula", false); setD("ITA209", "cursando", null, "2026/2", "Matrícula", false); setD("ITM022", "cursando", null, "2026/2", "Matrícula", false);
 
   disc._historicoTentativas = [
-    {cod:"ITA122", nota:2.06, sem:"2024/1", rp:true},
-    {cod:"ITA130", nota:0.00, sem:"2024/1", rp:true},
-    {cod:"ITM002", nota:0.74, sem:"2024/1", rp:true},
-    {cod:"ITM161", nota:1.47, sem:"2024/1", rp:true},
-    {cod:"ITS033", nota:3.23, sem:"2024/1", rp:true}, 
-    {cod:"ITA201", nota:0.00, sem:"2024/2", rp:true},
-    {cod:"ITA208", nota:0.00, sem:"2024/2", rp:true},
-    {cod:"ITM060", nota:0.00, sem:"2024/2", rp:true},
+    {cod:"ITA122", nota:2.06, sem:"2024/1", rp:true}, {cod:"ITA130", nota:0.00, sem:"2024/1", rp:true}, {cod:"ITM002", nota:0.74, sem:"2024/1", rp:true}, {cod:"ITM161", nota:1.47, sem:"2024/1", rp:true}, {cod:"ITS033", nota:3.23, sem:"2024/1", rp:true}, 
+    {cod:"ITA201", nota:0.00, sem:"2024/2", rp:true}, {cod:"ITA208", nota:0.00, sem:"2024/2", rp:true}, {cod:"ITM060", nota:0.00, sem:"2024/2", rp:true},
     {cod:"ITM002", nota:7.22, sem:"2024/2 (Férias)", rp:false},
-    {cod:"ITA122", nota:6.00, sem:"2025/1", rp:false},
-    {cod:"ITA130", nota:7.33, sem:"2025/1", rp:false},
-    {cod:"ITM021", nota:9.25, sem:"2025/1", rp:false},
-    {cod:"ITM161", nota:5.17, sem:"2025/1", rp:false},
-    {cod:"ITC020", nota:9.32, sem:"2025/1", rp:false},
-    {cod:"ITA104", nota:0.00, sem:"2025/2", rp:true},
-    {cod:"ITM018", nota:8.00, sem:"2025/2", rp:false},
-    {cod:"ITM802", nota:6.44, sem:"2025/2", rp:false},
-    {cod:"ITQ101", nota:1.00, sem:"2025/2", rp:true},
+    {cod:"ITA122", nota:6.00, sem:"2025/1", rp:false}, {cod:"ITA130", nota:7.33, sem:"2025/1", rp:false}, {cod:"ITM021", nota:9.25, sem:"2025/1", rp:false}, {cod:"ITM161", nota:5.17, sem:"2025/1", rp:false}, {cod:"ITC020", nota:9.32, sem:"2025/1", rp:false},
+    {cod:"ITA104", nota:0.00, sem:"2025/2", rp:true}, {cod:"ITM018", nota:8.00, sem:"2025/2", rp:false}, {cod:"ITM802", nota:6.44, sem:"2025/2", rp:false}, {cod:"ITQ101", nota:1.00, sem:"2025/2", rp:true},
     {cod:"ITA131", nota:7.25, sem:"2025/2 (Férias)", rp:false},
-    {cod:"ITA104", nota:0.67, sem:"2026/1", rp:true},
-    {cod:"ITA127", nota:9.00, sem:"2026/1", rp:false},
-    {cod:"ITM004", nota:1.24, sem:"2026/1", rp:true},
-    {cod:"ITM101", nota:0.00, sem:"2026/1", rp:true}
+    {cod:"ITA104", nota:0.67, sem:"2026/1", rp:true}, {cod:"ITA127", nota:9.00, sem:"2026/1", rp:false}, {cod:"ITM004", nota:1.24, sem:"2026/1", rp:true}, {cod:"ITM101", nota:0.00, sem:"2026/1", rp:true}
   ];
   return disc;
 }
 
 function estadoInicialLimpo(){
   const disc = {};
-  OBRIGATORIAS.concat(OPTATIVAS).forEach(d=>{
-    disc[d.cod] = {status:"pendente", nota:null, semestre:null, statusHist:"", rp:false};
-  });
+  OBRIGATORIAS.concat(OPTATIVAS).forEach(d=>{ disc[d.cod] = {status:"pendente", nota:null, semestre:null, statusHist:"", rp:false}; });
   disc._historicoTentativas = [];
   return disc;
 }
 
 function saveState() {
   if (!currentUser) return;
-  db.collection("users").doc(currentUser.uid).set({ state: state }, { merge: true })
-    .catch(err => console.error("Erro ao salvar no Firebase:", err));
+  db.collection("users").doc(currentUser.uid).set({ state: state }, { merge: true }).catch(err => console.error("Erro ao salvar no Firebase:", err));
 }
 
 function iniciarSincronizacao() {
@@ -582,7 +408,6 @@ function iniciarSincronizacao() {
         if(state.onboardingConcluido === undefined) state.onboardingConcluido = false;
       }
     } else {
-      // Se o documento não existe, cria um novo. 
       if (currentUser.email === "galvacaio18@gmail.com") {
         state.disciplinas = estadoInicialCaio();
         state.onboardingConcluido = true;
@@ -594,7 +419,6 @@ function iniciarSincronizacao() {
       saveState();
     }
     
-    // Verifica se precisa mostrar o Onboarding
     if (currentUser.email !== "galvacaio18@gmail.com" && !state.onboardingConcluido) {
       $("#app").classList.add("hidden");
       $("#onboardingView").classList.remove("hidden");
@@ -603,32 +427,24 @@ function iniciarSincronizacao() {
     } else {
       $("#onboardingView").classList.add("hidden");
       $("#app").classList.remove("hidden");
-      
       if (document.getElementById("app").classList.contains("hidden") === false) {
         montarAbas();
         renderView(abaAtiva, false);
       }
     }
-  }, (error) => {
-    console.error("Erro no listener:", error);
-  });
+  }, (error) => { console.error("Erro no listener:", error); });
 }
 
-/* =========================================================
-   4. AUTENTICAÇÃO (LOGIN / REGISTRO / RECUPERAÇÃO)
-   ========================================================= */
 auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user;
     $("#authView").classList.add("hidden");
-    
     if (user.email === "galvacaio18@gmail.com") {
       $("#hello").textContent = `${ALUNO.nome} · Matrícula ${ALUNO.matricula} · ${ALUNO.curso}`;
     } else {
       const nome = user.displayName || user.email.split("@")[0];
       $("#hello").textContent = `Olá, ${nome} · Painel Acadêmico`;
     }
-    
     iniciarSincronizacao();
   } else {
     currentUser = null;
@@ -642,12 +458,9 @@ auth.onAuthStateChanged((user) => {
 });
 
 $("#btnLogin").onclick = () => {
-  const email = $("#inEmail").value.trim();
-  const pass = $("#inPass").value;
+  const email = $("#inEmail").value.trim(); const pass = $("#inPass").value;
   if(!email || !pass) return $("#authMsg").textContent = "Preencha e-mail e senha.";
-  $("#btnLogin").textContent = "Entrando...";
-  $("#authMsg").textContent = "";
-
+  $("#btnLogin").textContent = "Entrando..."; $("#authMsg").textContent = "";
   auth.signInWithEmailAndPassword(email, pass).catch((error) => {
     $("#btnLogin").textContent = "Entrar";
     let msg = error.message;
@@ -658,19 +471,12 @@ $("#btnLogin").onclick = () => {
   });
 };
 
-$("#btnCreate").onclick = () => {
-  $("#loginBox").classList.add("hidden");
-  $("#firstBox").classList.remove("hidden");
-};
+$("#btnCreate").onclick = () => { $("#loginBox").classList.add("hidden"); $("#firstBox").classList.remove("hidden"); };
 
 $("#btnSaveUser").onclick = () => {
-  const email = $("#newEmail").value.trim();
-  const pass = $("#newPass").value;
-  const pass2 = $("#newPass2").value;
+  const email = $("#newEmail").value.trim(); const pass = $("#newPass").value; const pass2 = $("#newPass2").value;
   if (pass !== pass2) return $("#regMsg").textContent = "As senhas não conferem.";
-  $("#btnSaveUser").textContent = "Salvando...";
-  $("#regMsg").textContent = "";
-
+  $("#btnSaveUser").textContent = "Salvando..."; $("#regMsg").textContent = "";
   auth.createUserWithEmailAndPassword(email, pass).catch((error) => {
     $("#btnSaveUser").textContent = "Salvar";
     let msg = error.message;
@@ -680,43 +486,30 @@ $("#btnSaveUser").onclick = () => {
   });
 };
 
-$("#btnBackLogin").onclick = () => {
-  $("#loginBox").classList.remove("hidden");
-  $("#firstBox").classList.add("hidden");
-};
+$("#btnBackLogin").onclick = () => { $("#loginBox").classList.remove("hidden"); $("#firstBox").classList.add("hidden"); };
 
 $("#btnForgot").onclick = (e) => {
-  e.preventDefault();
-  const email = prompt("Digite seu e-mail para receber o link de redefinição:");
+  e.preventDefault(); const email = prompt("Digite seu e-mail para receber o link de redefinição:");
   if (!email) return;
-  auth.sendPasswordResetEmail(email)
-    .then(() => toast("E-mail de redefinição enviado. Verifique sua caixa de entrada.", "ok"))
-    .catch((error) => toast("Erro: " + error.message, "danger"));
+  auth.sendPasswordResetEmail(email).then(() => toast("E-mail enviado.", "ok")).catch((error) => toast("Erro: " + error.message, "danger"));
 };
 
-$("#btnLogout").onclick = () => {
-  if (unsubscribeSnapshot) unsubscribeSnapshot();
-  auth.signOut().then(() => { location.reload(); });
-};
+$("#btnLogout").onclick = () => { if (unsubscribeSnapshot) unsubscribeSnapshot(); auth.signOut().then(() => { location.reload(); }); };
 
 /* =========================================================
-   5. LÓGICA DO ONBOARDING (NOVO USUÁRIO)
+   ONBOARDING (COM SUPORTE A PDF AGORA)
    ========================================================= */
 function renderOnboarding() {
-  const preview = $("#obPreviewBox");
-  const jsonOut = $("#obJsonOut");
-  const msg = $("#obMsg");
+  const preview = $("#obPreviewBox"); const jsonOut = $("#obJsonOut"); const msg = $("#obMsg");
 
   $("#inpObFile").onchange = (e) => {
     const f = e.target.files[0]; if(!f) return;
     preview.innerHTML = "";
     if(f.type.startsWith("image/")){
-      const img = document.createElement("img");
-      img.style.maxWidth = "100%"; img.style.borderRadius="10px"; img.style.marginTop="10px";
-      img.src = URL.createObjectURL(f);
-      preview.appendChild(img);
+      const img = document.createElement("img"); img.style.maxWidth = "100%"; img.style.borderRadius="10px"; img.style.marginTop="10px";
+      img.src = URL.createObjectURL(f); preview.appendChild(img);
     } else {
-      preview.innerHTML = `<div class="small">Arquivo carregado: ${f.name}</div>`;
+      preview.innerHTML = `<div class="small">Arquivo PDF carregado: ${f.name}. Clique em Processar.</div>`;
     }
   };
 
@@ -724,34 +517,57 @@ function renderOnboarding() {
     const f = $("#inpObFile").files[0];
     if(!f) return toast("Selecione um arquivo primeiro.", "danger");
     
-    msg.textContent = "Processando OCR... (Isso pode levar alguns segundos)";
+    msg.textContent = "Processando OCR... Aguarde.";
+
     try {
-      if(f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")){
-        msg.textContent = "PDF detectado. Por favor, cole o JSON manualmente na caixa abaixo.";
-        toast("Converta o PDF em imagem ou cole o JSON.", "danger");
-        return;
+      let texto = "";
+
+      // SE FOR PDF, CONVERTE PARA IMAGEM USANDO PDF.JS
+      if(f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
+        const arrayBuffer = await f.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+        const page = await pdf.getPage(1); // Lê a primeira página
+        
+        const viewport = page.getViewport({scale: 2.0}); // Aumenta a resolução para o OCR ler melhor
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        await page.render({canvasContext: context, viewport: viewport}).promise;
+        
+        // Passa o canvas renderizado para o Tesseract
+        const { data } = await Tesseract.recognize(canvas, "por");
+        texto = data.text || "";
+      } 
+      // SE FOR IMAGEM DIRETA
+      else {
+        const { data } = await Tesseract.recognize(f, "por");
+        texto = data.text || "";
       }
-      
-      // Tesseract OCR na imagem
-      const { data } = await Tesseract.recognize(f, "por");
-      const texto = data.text || "";
       
       msg.textContent = "OCR concluído. Revise o JSON gerado abaixo.";
       
-      // Tentativa simples de extrair códigos e notas do texto
       const linhas = texto.split("\n");
       const out = [];
-      const codigos = OBRIGATORIAS.concat(OPTATIVAS).map(d=>d.cod);
+      
+      // O padrão das disciplinas da UFAM é 3 letras e 3 números (ex: ITA122, ITM161)
+      const regexCod = /[A-Z]{3}\d{3}/g;
       
       linhas.forEach(l => {
-        const cod = codigos.find(c => l.toUpperCase().includes(c));
-        if(!cod) return;
+        const matchCod = l.match(regexCod);
+        if(!matchCod) return;
+        
+        const cod = matchCod[0];
+        
+        // Tenta achar notas no formato 0.00 ou 8,5
         const nums = l.match(/\b\d{1,2}([.,]\d{1,2})?\b/g) || [];
         let nota = null;
         for(const n of nums){
           const v = parseFloat(n.replace(",", "."));
           if(v >= 0 && v <= 10){ nota = v; break; }
         }
+        
         out.push({ cod, nota, status: "concluida", semestre: "Extraído" });
       });
       
@@ -759,22 +575,24 @@ function renderOnboarding() {
         jsonOut.value = JSON.stringify(out, null, 2);
       } else {
         jsonOut.value = "[]";
-        msg.textContent = "Não foi possível extrair dados precisos. Cole o JSON manualmente.";
+        msg.textContent = "Não foi possível extrair os códigos automaticamente. Por favor, cole o JSON manualmente.";
       }
     } catch(e) {
-      msg.textContent = "Erro no OCR: " + e.message;
+      msg.textContent = "Erro ao processar: " + e.message;
     }
   };
 
   $("#btnValidarLiberar").onclick = () => {
     try {
-      const arr = JSON.parse(jsonOut.value);
+      const rawJson = jsonOut.value.trim();
+      if(!rawJson) { msg.textContent = "A caixa está vazia. Cole um JSON válido ou digite [] para pular."; return; }
+
+      const arr = JSON.parse(rawJson);
       if(!Array.isArray(arr)) throw new Error("O JSON deve ser uma lista.");
       
       let erros = [];
       const disciplinasValidas = OBRIGATORIAS.concat(OPTATIVAS);
 
-      // Sistema Matemático de Comparação
       arr.forEach((it, index) => {
         if(!it.cod) { erros.push(`Item ${index+1}: Código ausente.`); return; }
         const disc = disciplinasValidas.find(d => d.cod === it.cod);
@@ -782,18 +600,12 @@ function renderOnboarding() {
         
         if(it.nota != null) {
           const nota = Number(it.nota);
-          if(isNaN(nota) || nota < 0 || nota > 10) {
-            erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida (deve ser 0 a 10).`);
-          }
+          if(isNaN(nota) || nota < 0 || nota > 10) { erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida (deve ser 0 a 10).`); }
         }
       });
 
-      if(erros.length > 0) {
-        msg.innerHTML = "Erros encontrados na validação:<br>" + erros.join("<br>");
-        return;
-      }
+      if(erros.length > 0) { msg.innerHTML = "Erros encontrados na validação:<br>" + erros.join("<br>"); return; }
 
-      // Se passou, aplica os dados
       arr.forEach(it => {
         state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, {
           nota: it.nota!=null? Number(it.nota) : null,
@@ -809,50 +621,22 @@ function renderOnboarding() {
       toast("Dados validados e importados com sucesso!");
       $("#onboardingView").classList.add("hidden");
       $("#app").classList.remove("hidden");
-      
-      montarAbas();
-      renderView(0);
-
-    } catch(e) {
-      msg.textContent = "Erro na leitura do JSON: " + e.message;
-    }
+      montarAbas(); renderView(0);
+    } catch(e) { msg.textContent = "Erro na leitura do JSON: " + e.message; }
   };
 }
 
-/* =========================================================
-   6. CÁLCULOS E LÓGICA DO APP
-   ========================================================= */
 const fmt = n => (Math.round(n*100)/100).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
 function hojeISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
 function toDate(iso){ return new Date(iso+"T00:00:00"); }
-function diffDias(iso){
-  const h = new Date(); h.setHours(0,0,0,0);
-  const d = toDate(iso);
-  return Math.round((d-h)/86400000);
-}
-function toast(msg, tipo="ok"){
-  const t=$("#toast"); t.textContent=msg; t.classList.remove("hidden");
-  t.style.borderColor = tipo==="danger" ? "var(--danger)" : "var(--accent)";
-  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.add("hidden"), 3500);
-}
-function registrarAtividade(txt){
-  state.atividades.unshift({txt, quando:new Date().toISOString()});
-  if(state.atividades.length>300) state.atividades.length=300;
-  saveState();
-}
+function diffDias(iso){ const h = new Date(); h.setHours(0,0,0,0); const d = toDate(iso); return Math.round((d-h)/86400000); }
+function toast(msg, tipo="ok"){ const t=$("#toast"); t.textContent=msg; t.classList.remove("hidden"); t.style.borderColor = tipo==="danger" ? "var(--danger)" : "var(--accent)"; clearTimeout(t._t); t._t=setTimeout(()=>t.classList.add("hidden"), 3500); }
+function registrarAtividade(txt){ state.atividades.unshift({txt, quando:new Date().toISOString()}); if(state.atividades.length>300) state.atividades.length=300; saveState(); }
 
 function progresso(){
   let chConcObrig = 0, chConcOpt = 0, qtdConc = 0;
-  OBRIGATORIAS.forEach(d=>{
-    const st = state.disciplinas[d.cod]?.status;
-    const reg = state.disciplinas[d.cod];
-    if(st==="concluida" && reg && !reg.rp){ chConcObrig += d.ch; qtdConc++; }
-  });
-  OPTATIVAS.forEach(d=>{
-    const st = state.disciplinas[d.cod]?.status;
-    const reg = state.disciplinas[d.cod];
-    if(st==="concluida" && reg && !reg.rp){ chConcOpt += d.ch; }
-  });
+  OBRIGATORIAS.forEach(d=>{ const st = state.disciplinas[d.cod]?.status; const reg = state.disciplinas[d.cod]; if(st==="concluida" && reg && !reg.rp){ chConcObrig += d.ch; qtdConc++; } });
+  OPTATIVAS.forEach(d=>{ const st = state.disciplinas[d.cod]?.status; const reg = state.disciplinas[d.cod]; if(st==="concluida" && reg && !reg.rp){ chConcOpt += d.ch; } });
   const chConc = chConcObrig + chConcOpt;
   const pctCH = Math.min(100, (chConcObrig / CH_OBRIG)*100);
   const pctQtd = (qtdConc / OBRIGATORIAS.length)*100;
@@ -866,9 +650,8 @@ function calcStats(){
   todas.forEach(d => {
     const reg = state.disciplinas[d.cod];
     if(!reg) { faltam++; return; }
-    if (reg.status === "concluida") {
-      if (reg.rp) { reprovadas++; } else { aprovadas++; }
-    } else if (reg.status === "cursando") { cursando++; } else { faltam++; }
+    if (reg.status === "concluida") { if (reg.rp) { reprovadas++; } else { aprovadas++; } } 
+    else if (reg.status === "cursando") { cursando++; } else { faltam++; }
   });
   return { aprovadas, reprovadas, cursando, faltam };
 }
@@ -878,11 +661,8 @@ function estimativaFormatura(){
   const restantes = OBRIGATORIAS.length - p.qtdConc;
   const semestresRestantes = Math.max(0, Math.ceil(restantes / DISCIPLINAS_POR_SEMESTRE));
   const agora = new Date();
-  let ano = agora.getFullYear();
-  let sem = agora.getMonth() < 7 ? 1 : 2;
-  for(let i=0;i<semestresRestantes;i++){
-    if(sem===1){ sem=2; } else { sem=1; ano++; }
-  }
+  let ano = agora.getFullYear(); let sem = agora.getMonth() < 7 ? 1 : 2;
+  for(let i=0;i<semestresRestantes;i++){ if(sem===1){ sem=2; } else { sem=1; ano++; } }
   const fim = sem===1 ? `${ano}-07-09` : `${ano}-12-12`;
   return {restantes, semestresRestantes, previsao:fim};
 }
@@ -895,1060 +675,292 @@ function mediaPonderada(avs){
 }
 
 function calcularCR(){
-  const itens = [];
-  let somaNotaCH = 0;
-  let somaCH = 0;
+  const itens = []; let somaNotaCH = 0; let somaCH = 0;
   const tentativas = state.disciplinas._historicoTentativas || [];
-  
   const mapaTentativas = {};
-  tentativas.forEach(t => {
-    if(!mapaTentativas[t.cod]) mapaTentativas[t.cod] = [];
-    mapaTentativas[t.cod].push(t);
-  });
+  tentativas.forEach(t => { if(!mapaTentativas[t.cod]) mapaTentativas[t.cod] = []; mapaTentativas[t.cod].push(t); });
 
   OBRIGATORIAS.concat(OPTATIVAS).forEach(d => {
-    const reg = state.disciplinas[d.cod];
-    if(!reg) return;
-    if(!mapaTentativas[d.cod] && reg.nota != null) {
-      mapaTentativas[d.cod] = [{ cod: d.cod, nota: reg.nota, sem: reg.semestre || "Atual", rp: reg.rp }];
-    } else if (mapaTentativas[d.cod] && mapaTentativas[d.cod].length > 0) {
+    const reg = state.disciplinas[d.cod]; if(!reg) return;
+    if(!mapaTentativas[d.cod] && reg.nota != null) { mapaTentativas[d.cod] = [{ cod: d.cod, nota: reg.nota, sem: reg.semestre || "Atual", rp: reg.rp }]; } 
+    else if (mapaTentativas[d.cod] && mapaTentativas[d.cod].length > 0) {
       const lastTent = mapaTentativas[d.cod][mapaTentativas[d.cod].length - 1];
       if(reg.nota != null && (lastTent.nota !== reg.nota || lastTent.rp !== reg.rp)) {
-         mapaTentativas[d.cod][mapaTentativas[d.cod].length - 1] = {
-            cod: d.cod, nota: reg.rp ? (reg.statusHist==="Repro Freq" ? reg.nota : reg.nota) : reg.nota,
-            sem: reg.semestre || "Atual", rp: reg.rp
-         };
+         mapaTentativas[d.cod][mapaTentativas[d.cod].length - 1] = { cod: d.cod, nota: reg.rp ? (reg.statusHist==="Repro Freq" ? reg.nota : reg.nota) : reg.nota, sem: reg.semestre || "Atual", rp: reg.rp };
       }
     }
   });
 
   Object.keys(mapaTentativas).forEach(cod => {
-    const arr = mapaTentativas[cod];
-    const discDef = OBRIGATORIAS.concat(OPTATIVAS).find(x => x.cod === cod);
-    if(!discDef) return;
+    const arr = mapaTentativas[cod]; const discDef = OBRIGATORIAS.concat(OPTATIVAS).find(x => x.cod === cod); if(!discDef) return;
     arr.forEach(t => {
-      let notaFinal = t.nota;
-      if(notaFinal == null) return;
-      const peso = discDef.ch;
-      somaNotaCH += (notaFinal * peso);
-      somaCH += peso;
+      let notaFinal = t.nota; if(notaFinal == null) return;
+      const peso = discDef.ch; somaNotaCH += (notaFinal * peso); somaCH += peso;
       itens.push({ cod: cod, nome: discDef.nome, nota: notaFinal, ch: peso, cred: discDef.cred, sem: t.sem, rp: t.rp });
     });
   });
 
   let cr = somaCH > 0 ? (somaNotaCH / somaCH) : null;
-  
-  const porSemestre = {};
-  itens.forEach(i=>{
-    if(!porSemestre[i.sem]) porSemestre[i.sem] = [];
-    porSemestre[i.sem].push(i);
-  });
-  
+  const porSemestre = {}; itens.forEach(i=>{ if(!porSemestre[i.sem]) porSemestre[i.sem] = []; porSemestre[i.sem].push(i); });
   const semestres = {};
-  Object.keys(porSemestre).forEach(s=>{
-    const arr = porSemestre[s];
-    let sn=0, sc=0;
-    arr.forEach(i=>{ sn+=i.nota*i.ch; sc+=i.ch; });
-    semestres[s] = sc? sn/sc : null;
-  });
-
+  Object.keys(porSemestre).forEach(s=>{ const arr = porSemestre[s]; let sn=0, sc=0; arr.forEach(i=>{ sn+=i.nota*i.ch; sc+=i.ch; }); semestres[s] = sc? sn/sc : null; });
   return {itens, cr, porSemestre, semestres};
 }
 
 function prerequisitosPendentes(cod){
-  const d = OBRIGATORIAS.find(x=>x.cod===cod);
-  if(!d || !d.pre || !d.pre.length) return [];
-  return d.pre.filter(p=> {
-    const r = state.disciplinas[p];
-    return !(r && r.status === "concluida" && !r.rp);
-  });
+  const d = OBRIGATORIAS.find(x=>x.cod===cod); if(!d || !d.pre || !d.pre.length) return [];
+  return d.pre.filter(p=> { const r = state.disciplinas[p]; return !(r && r.status === "concluida" && !r.rp); });
 }
 
 function choqueHorario(codA, codB){
-  const ha = state.horarios[codA] || [];
-  const hb = state.horarios[codB] || [];
-  for(const a of ha){
-    for(const b of hb){
-      if(a.dia===b.dia){
-        const iniA = toMin(a.ini), fimA = toMin(a.fim);
-        const iniB = toMin(b.ini), fimB = toMin(b.fim);
-        if(iniA < fimB && iniB < fimA) return true;
-      }
-    }
-  }
+  const ha = state.horarios[codA] || []; const hb = state.horarios[codB] || [];
+  for(const a of ha){ for(const b of hb){ if(a.dia===b.dia){ const iniA = toMin(a.ini), fimA = toMin(a.fim); const iniB = toMin(b.ini), fimB = toMin(b.fim); if(iniA < fimB && iniB < fimA) return true; } } }
   return false;
 }
-function toMin(hhmm){
-  if(!hhmm) return 0;
-  const [h,m] = hhmm.split(":").map(Number);
-  return h*60 + (m||0);
-}
+function toMin(hhmm){ if(!hhmm) return 0; const [h,m] = hhmm.split(":").map(Number); return h*60 + (m||0); }
 
-/* =========================================================
-   7. ABAS E VIEWS
-   ========================================================= */
 const ABAS = [
-  {id:"visao", ico:"📊", nome:"Visão geral"},
-  {id:"matriz", ico:"📚", nome:"Matriz do curso"},
-  {id:"semestre", ico:"📝", nome:"Meu semestre"},
-  {id:"horario", ico:"🕒", nome:"Quadro de Horário"},
-  {id:"cr", ico:"📈", nome:"CR e notas"},
-  {id:"prereq", ico:"🔗", nome:"Pré-requisitos"},
-  {id:"simulador", ico:"🧪", nome:"Simulador de matrícula"},
-  {id:"calendario", ico:"📅", nome:"Calendário 2026"},
-  {id:"prazos", ico:"⏰", nome:"Prazos e avisos"},
-  {id:"conteudos", ico:"🎓", nome:"Conteúdos"},
-  {id:"importar", ico:"📄", nome:"Importar PDF/Imagem"},
-  {id:"atividades", ico:"🕘", nome:"Histórico"},
-  {id:"config", ico:"⚙️", nome:"Configurações"}
+  {id:"visao", ico:"📊", nome:"Visão geral"}, {id:"matriz", ico:"📚", nome:"Matriz do curso"}, {id:"semestre", ico:"📝", nome:"Meu semestre"}, {id:"horario", ico:"🕒", nome:"Quadro de Horário"}, {id:"cr", ico:"📈", nome:"CR e notas"}, {id:"prereq", ico:"🔗", nome:"Pré-requisitos"}, {id:"simulador", ico:"🧪", nome:"Simulador de matrícula"}, {id:"calendario", ico:"📅", nome:"Calendário 2026"}, {id:"prazos", ico:"⏰", nome:"Prazos e avisos"}, {id:"conteudos", ico:"🎓", nome:"Conteúdos"}, {id:"importar", ico:"📄", nome:"Importar PDF/Imagem"}, {id:"atividades", ico:"🕘", nome:"Histórico"}, {id:"config", ico:"⚙️", nome:"Configurações"}
 ];
 let abaAtiva = 0;
 function montarAbas(){
   const box = $("#tabs"); box.innerHTML="";
   ABAS.forEach((a,i)=>{
-    const el=document.createElement("div");
-    el.className="tab"+(i===abaAtiva?" active":"");
-    el.textContent=`${a.ico} ${a.nome}`;
-    el.onclick=()=>{ abaAtiva=i; montarAbas(); renderView(i); };
-    box.appendChild(el);
+    const el=document.createElement("div"); el.className="tab"+(i===abaAtiva?" active":""); el.textContent=`${a.ico} ${a.nome}`;
+    el.onclick=()=>{ abaAtiva=i; montarAbas(); renderView(i); }; box.appendChild(el);
   });
 }
 
 function renderView(i, scrollTop = true){
   const v = $("#views"); v.innerHTML="";
-  const fn = {
-    visao:viewVisao, matriz:viewMatriz, semestre:viewSemestre, horario:viewHorario,
-    cr:viewCR, prereq:viewPrereq, simulador:viewSimulador, calendario:viewCalendario,
-    prazos:viewPrazos, conteudos:viewConteudos, importar:viewImportar,
-    atividades:viewAtividades, config:viewConfig
-  }[ABAS[i].id];
+  const fn = { visao:viewVisao, matriz:viewMatriz, semestre:viewSemestre, horario:viewHorario, cr:viewCR, prereq:viewPrereq, simulador:viewSimulador, calendario:viewCalendario, prazos:viewPrazos, conteudos:viewConteudos, importar:viewImportar, atividades:viewAtividades, config:viewConfig }[ABAS[i].id];
   if(fn) fn(v);
   if(scrollTop) window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function viewVisao(root){
-  const p = progresso();
-  const est = estimativaFormatura();
-  const cr = calcularCR();
-  const stats = calcStats();
+  const p = progresso(); const est = estimativaFormatura(); const cr = calcularCR(); const stats = calcStats();
   const proximos = CALENDARIO.map(e=>({...e, dias:diffDias(e.data)})).filter(e=>e.dias>=0).sort((a,b)=>a.dias-b.dias).slice(0,5);
-
-  const porPer = {};
-  OBRIGATORIAS.forEach(d=>{
-    if(!porPer[d.per]) porPer[d.per] = {ok:0, total:0};
-    porPer[d.per].total++;
-    const r = state.disciplinas[d.cod];
-    if(r && r.status==="concluida" && !r.rp) porPer[d.per].ok++;
-  });
-
-  let chObrigRealizada = 0, credObrigRealizado = 0;
-  let chOptRealizada = 0, credOptRealizado = 0;
-  
-  OBRIGATORIAS.forEach(d => {
-    const r = state.disciplinas[d.cod];
-    if(r && r.status === "concluida" && !r.rp) { chObrigRealizada += d.ch; credObrigRealizado += d.cred; }
-  });
-
-  OPTATIVAS.forEach(d => {
-    const r = state.disciplinas[d.cod];
-    if(r && r.status === "concluida" && !r.rp) { chOptRealizada += d.ch; credOptRealizado += d.cred; }
-  });
-
-  const chTotalRealizada = chObrigRealizada + chOptRealizada;
-  const credTotalRealizado = credObrigRealizado + credOptRealizado;
-  
-  const aaccExigida = 200, aaccRealizada = 0; 
-  const chObrigExigida = 3240, credObrigExigido = 193;
-  const chOptExigida = 180, credOptExigido = 12;
-  const chTotalExigida = 3620, credTotalExigido = 205;
-
-  const pctCH_Obrig = (chObrigRealizada/chObrigExigida)*100;
-  const pctCred_Obrig = (credObrigRealizado/credObrigExigido)*100;
-  const pctCH_Opt = (chOptRealizada/chOptExigida)*100;
-  const pctCred_Opt = (credOptRealizado/credOptExigido)*100;
-  const pctCH_Total = (chTotalRealizada/chTotalExigida)*100;
-  const pctCred_Total = (credTotalRealizado/credTotalExigido)*100;
+  const porPer = {}; OBRIGATORIAS.forEach(d=>{ if(!porPer[d.per]) porPer[d.per] = {ok:0, total:0}; porPer[d.per].total++; const r = state.disciplinas[d.cod]; if(r && r.status==="concluida" && !r.rp) porPer[d.per].ok++; });
+  let chObrigRealizada = 0, credObrigRealizado = 0; let chOptRealizada = 0, credOptRealizado = 0;
+  OBRIGATORIAS.forEach(d => { const r = state.disciplinas[d.cod]; if(r && r.status === "concluida" && !r.rp) { chObrigRealizada += d.ch; credObrigRealizado += d.cred; } });
+  OPTATIVAS.forEach(d => { const r = state.disciplinas[d.cod]; if(r && r.status === "concluida" && !r.rp) { chOptRealizada += d.ch; credOptRealizado += d.cred; } });
+  const chTotalRealizada = chObrigRealizada + chOptRealizada; const credTotalRealizado = credObrigRealizado + credOptRealizado;
+  const aaccExigida = 200, aaccRealizada = 0; const chObrigExigida = 3240, credObrigExigido = 193; const chOptExigida = 180, credOptExigido = 12; const chTotalExigida = 3620, credTotalExigido = 205;
+  const pctCH_Obrig = (chObrigRealizada/chObrigExigida)*100; const pctCred_Obrig = (credObrigRealizado/credObrigExigido)*100;
+  const pctCH_Opt = (chOptRealizada/chOptExigida)*100; const pctCred_Opt = (credOptRealizado/credOptExigido)*100;
+  const pctCH_Total = (chTotalRealizada/chTotalExigida)*100; const pctCred_Total = (credTotalRealizado/credTotalExigido)*100;
 
   const html = `
-  <div class="card ornament" style="margin-bottom:16px">
-    <div class="section-title"><span class="ico">👤</span><h2>Dados do aluno</h2></div>
-    <div class="grid cols-3 small">
-      <div><span class="label">Nome</span><br>${ALUNO.nome}</div>
-      <div><span class="label">Matrícula</span><br>${ALUNO.matricula}</div>
-      <div><span class="label">Curso</span><br>${ALUNO.curso}</div>
-    </div>
+  <div class="card ornament" style="margin-bottom:16px"><div class="section-title"><span class="ico">👤</span><h2>Dados do aluno</h2></div><div class="grid cols-3 small"><div><span class="label">Nome</span><br>${ALUNO.nome}</div><div><span class="label">Matrícula</span><br>${ALUNO.matricula}</div><div><span class="label">Curso</span><br>${ALUNO.curso}</div></div></div>
+  <div class="card ornament" style="margin-bottom:16px"><div class="section-title"><span class="ico">📋</span><h2>Integralização Curricular</h2></div>
+    <div class="table-responsive"><table><thead><tr><th rowspan="2">COMPONENTES</th><th colspan="3" style="text-align:center;">CARGA HORÁRIA</th><th colspan="3" style="text-align:center;">CRÉDITOS</th></tr><tr><th style="text-align:center;">Exigida</th><th style="text-align:center;">Realizada</th><th style="text-align:center;">%</th><th style="text-align:center;">Exigido</th><th style="text-align:center;">Realizado</th><th style="text-align:center;">%</th></tr></thead><tbody>
+      <tr><td>AACC</td><td style="text-align:center;">${aaccExigida}</td><td style="text-align:center;">${aaccRealizada}</td><td style="text-align:center;">0.00 %</td><td style="text-align:center;">0</td><td style="text-align:center;">0</td><td style="text-align:center;">0.00 %</td></tr>
+      <tr><td>OBRIGATÓRIAS</td><td style="text-align:center;">${chObrigExigida}</td><td style="text-align:center;">${chObrigRealizada}</td><td style="text-align:center;">${fmt(pctCH_Obrig)} %</td><td style="text-align:center;">${credObrigExigido}</td><td style="text-align:center;">${credObrigRealizado}</td><td style="text-align:center;">${fmt(pctCred_Obrig)} %</td></tr>
+      <tr><td>OPTATIVAS</td><td style="text-align:center;">${chOptExigida}</td><td style="text-align:center;">${chOptRealizada}</td><td style="text-align:center;">${fmt(pctCH_Opt)} %</td><td style="text-align:center;">${credOptExigido}</td><td style="text-align:center;">${credOptRealizado}</td><td style="text-align:center;">${fmt(pctCred_Opt)} %</td></tr>
+      <tr style="background:rgba(76,201,240,.08); font-weight:bold;"><td>TOTAL</td><td style="text-align:center;">${chTotalExigida}</td><td style="text-align:center;">${chTotalRealizada}</td><td style="text-align:center; color:var(--accent);">${fmt(pctCH_Total)} %</td><td style="text-align:center;">${credTotalExigido}</td><td style="text-align:center;">${credTotalRealizado}</td><td style="text-align:center; color:var(--accent);">${fmt(pctCred_Total)} %</td></tr>
+    </tbody></table></div><div class="small" style="text-align:center; margin-top:10px; color:var(--muted)">** COEFICIENTE DE RENDIMENTO ESCOLAR = ${cr.cr?fmt(cr.cr):"—"} **</div>
   </div>
-
-  <div class="card ornament" style="margin-bottom:16px">
-    <div class="section-title"><span class="ico">📋</span><h2>Integralização Curricular</h2></div>
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th rowspan="2">COMPONENTES</th>
-            <th colspan="3" style="text-align:center;">CARGA HORÁRIA</th>
-            <th colspan="3" style="text-align:center;">CRÉDITOS</th>
-          </tr>
-          <tr>
-            <th style="text-align:center;">Exigida</th>
-            <th style="text-align:center;">Realizada</th>
-            <th style="text-align:center;">%</th>
-            <th style="text-align:center;">Exigido</th>
-            <th style="text-align:center;">Realizado</th>
-            <th style="text-align:center;">%</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>AACC</td>
-            <td style="text-align:center;">${aaccExigida}</td>
-            <td style="text-align:center;">${aaccRealizada}</td>
-            <td style="text-align:center;">0.00 %</td>
-            <td style="text-align:center;">0</td>
-            <td style="text-align:center;">0</td>
-            <td style="text-align:center;">0.00 %</td>
-          </tr>
-          <tr>
-            <td>OBRIGATÓRIAS</td>
-            <td style="text-align:center;">${chObrigExigida}</td>
-            <td style="text-align:center;">${chObrigRealizada}</td>
-            <td style="text-align:center;">${fmt(pctCH_Obrig)} %</td>
-            <td style="text-align:center;">${credObrigExigido}</td>
-            <td style="text-align:center;">${credObrigRealizado}</td>
-            <td style="text-align:center;">${fmt(pctCred_Obrig)} %</td>
-          </tr>
-          <tr>
-            <td>OPTATIVAS</td>
-            <td style="text-align:center;">${chOptExigida}</td>
-            <td style="text-align:center;">${chOptRealizada}</td>
-            <td style="text-align:center;">${fmt(pctCH_Opt)} %</td>
-            <td style="text-align:center;">${credOptExigido}</td>
-            <td style="text-align:center;">${credOptRealizado}</td>
-            <td style="text-align:center;">${fmt(pctCred_Opt)} %</td>
-          </tr>
-          <tr style="background:rgba(76,201,240,.08); font-weight:bold;">
-            <td>TOTAL</td>
-            <td style="text-align:center;">${chTotalExigida}</td>
-            <td style="text-align:center;">${chTotalRealizada}</td>
-            <td style="text-align:center; color:var(--accent);">${fmt(pctCH_Total)} %</td>
-            <td style="text-align:center;">${credTotalExigido}</td>
-            <td style="text-align:center;">${credTotalRealizado}</td>
-            <td style="text-align:center; color:var(--accent);">${fmt(pctCred_Total)} %</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="small" style="text-align:center; margin-top:10px; color:var(--muted)">
-      ** COEFICIENTE DE RENDIMENTO ESCOLAR = ${cr.cr?fmt(cr.cr):"—"} **
-    </div>
-  </div>
-
   <div class="grid cols-2">
-    <div class="card ornament">
-      <div class="section-title"><span class="ico">🧮</span><h2>Progresso do curso</h2></div>
-      <div class="progress-ring">
-        <div class="ring" style="--p:${p.pctCurso.toFixed(2)}"><span>${fmt(p.pctCurso)}%</span></div>
-        <div style="flex:1">
-          <div class="label">Carga horária</div>
-          <div class="stat">${p.chConc} h <span class="small">/ ${CH_TOTAL} h</span></div>
-          <div class="bar"><div style="width:${p.pctCurso}%"></div></div>
-          <div class="small" style="margin-top:10px">Obrigatórias: <b>${p.qtdConc}/${p.total}</b> (${fmt(p.pctQtd)}%)</div>
-        </div>
-      </div>
-    </div>
-    <div class="card ornament">
-      <div class="section-title"><span class="ico">🎯</span><h2>Formatura Prevista</h2></div>
-      <div class="stat">${est.previsao.split("-").reverse().join("/")}</div>
-      <div class="small" style="margin-top:8px">Restam <b>${est.restantes}</b> obrigatórias</div>
-      <div class="small">Aprox. <b>${est.semestresRestantes}</b> semestres (${DISCIPLINAS_POR_SEMESTRE}/sem)</div>
-    </div>
+    <div class="card ornament"><div class="section-title"><span class="ico">🧮</span><h2>Progresso do curso</h2></div><div class="progress-ring"><div class="ring" style="--p:${p.pctCurso.toFixed(2)}"><span>${fmt(p.pctCurso)}%</span></div><div style="flex:1"><div class="label">Carga horária</div><div class="stat">${p.chConc} h <span class="small">/ ${CH_TOTAL} h</span></div><div class="bar"><div style="width:${p.pctCurso}%"></div></div><div class="small" style="margin-top:10px">Obrigatórias: <b>${p.qtdConc}/${p.total}</b> (${fmt(p.pctQtd)}%)</div></div></div></div>
+    <div class="card ornament"><div class="section-title"><span class="ico">🎯</span><h2>Formatura Prevista</h2></div><div class="stat">${est.previsao.split("-").reverse().join("/")}</div><div class="small" style="margin-top:8px">Restam <b>${est.restantes}</b> obrigatórias</div><div class="small">Aprox. <b>${est.semestresRestantes}</b> semestres (${DISCIPLINAS_POR_SEMESTRE}/sem)</div></div>
   </div>
-
-  <div class="grid cols-3" style="margin-top:16px">
-    <div class="card cr"><div class="label">CR geral</div><div class="stat">${cr.cr?fmt(cr.cr):"—"}</div></div>
-    <div class="card cr"><div class="label">Disciplinas</div><div class="stat">${cr.itens.length}</div></div>
-    <div class="card cr"><div class="label">Cursando</div><div class="stat">${stats.cursando}</div></div>
-  </div>
-
-  <div class="card ornament" style="margin-top:16px">
-    <div class="section-title"><span class="ico">📊</span><h2>Progresso por Período</h2></div>
-    ${Object.keys(porPer).sort((a,b)=>a-b).map(per=>{
-      const o = porPer[per];
-      const pct = o.total? (o.ok/o.total)*100 : 0;
-      return `<div class="hbar">
-        <div class="lab">${per}º per.</div>
-        <div class="trk"><div class="ok" style="width:${pct}%"></div><div class="pend" style="width:${100-pct}%"></div></div>
-        <div class="num">${o.ok}/${o.total}</div>
-      </div>`;
-    }).join("")}
-  </div>
-
+  <div class="grid cols-3" style="margin-top:16px"><div class="card cr"><div class="label">CR geral</div><div class="stat">${cr.cr?fmt(cr.cr):"—"}</div></div><div class="card cr"><div class="label">Disciplinas</div><div class="stat">${cr.itens.length}</div></div><div class="card cr"><div class="label">Cursando</div><div class="stat">${stats.cursando}</div></div></div>
+  <div class="card ornament" style="margin-top:16px"><div class="section-title"><span class="ico">📊</span><h2>Progresso por Período</h2></div>${Object.keys(porPer).sort((a,b)=>a-b).map(per=>{ const o = porPer[per]; const pct = o.total? (o.ok/o.total)*100 : 0; return `<div class="hbar"><div class="lab">${per}º per.</div><div class="trk"><div class="ok" style="width:${pct}%"></div><div class="pend" style="width:${100-pct}%"></div></div><div class="num">${o.ok}/${o.total}</div></div>`; }).join("")}</div>
   <div class="grid cols-2" style="margin-top:16px">
-    <div class="card cal">
-      <div class="section-title"><span class="ico">⏳</span><h2>Próximos prazos</h2></div>
-      ${proximos.length? proximos.map(e=>`
-        <div class="alert ${e.dias<=3?"danger":e.dias<=10?"":"ok"}">
-          <b>${e.titulo}</b><br>
-          <span class="small">${e.data.split("-").reverse().join("/")} · em ${e.dias} dia(s)</span>
-        </div>`).join("") : `<div class="small">Nenhum prazo futuro cadastrado.</div>`}
-    </div>
-    <div class="card ornament">
-      <div class="section-title"><span class="ico">📌</span><h2>Resumo do seu histórico</h2></div>
-      <div class="grid cols-4" style="text-align:center; gap:8px;">
-        <div>
-          <div class="label">Aprovadas</div>
-          <div class="stat" style="color:var(--ok)">${stats.aprovadas}</div>
-        </div>
-        <div>
-          <div class="label">Reprovadas</div>
-          <div class="stat" style="color:var(--danger)">${stats.reprovadas}</div>
-        </div>
-        <div>
-          <div class="label">Cursando</div>
-          <div class="stat" style="color:var(--accent)">${stats.cursando}</div>
-        </div>
-        <div>
-          <div class="label">Faltam</div>
-          <div class="stat" style="color:var(--warn)">${stats.faltam}</div>
-        </div>
-      </div>
-      <div style="margin-top:15px" class="small">Última atualização: ${state.atividades[0]? new Date(state.atividades[0].quando).toLocaleString("pt-BR") : "—"}</div>
-    </div>
+    <div class="card cal"><div class="section-title"><span class="ico">⏳</span><h2>Próximos prazos</h2></div>${proximos.length? proximos.map(e=>`<div class="alert ${e.dias<=3?"danger":e.dias<=10?"":"ok"}"><b>${e.titulo}</b><br><span class="small">${e.data.split("-").reverse().join("/")} · em ${e.dias} dia(s)</span></div>`).join("") : `<div class="small">Nenhum prazo futuro.</div>`}</div>
+    <div class="card ornament"><div class="section-title"><span class="ico">📌</span><h2>Resumo do seu histórico</h2></div><div class="grid cols-4" style="text-align:center; gap:8px;"><div><div class="label">Aprovadas</div><div class="stat" style="color:var(--ok)">${stats.aprovadas}</div></div><div><div class="label">Reprovadas</div><div class="stat" style="color:var(--danger)">${stats.reprovadas}</div></div><div><div class="label">Cursando</div><div class="stat" style="color:var(--accent)">${stats.cursando}</div></div><div><div class="label">Faltam</div><div class="stat" style="color:var(--warn)">${stats.faltam}</div></div></div><div style="margin-top:15px" class="small">Última atualização: ${state.atividades[0]? new Date(state.atividades[0].quando).toLocaleString("pt-BR") : "—"}</div></div>
   </div>`;
   root.innerHTML = html;
 }
 
 function viewMatriz(root){
   const per = [...new Set(OBRIGATORIAS.map(d=>d.per))].sort((a,b)=>a-b);
-  let html = `<div class="card ornament"><div class="section-title"><span class="ico">📚</span><h2>Matriz do curso</h2></div>
-  <div class="small" style="margin-bottom:10px">Clique no status para alterar. Use "RP" (Reprovado) ou "Falta".</div>`;
-  
+  let html = `<div class="card ornament"><div class="section-title"><span class="ico">📚</span><h2>Matriz do curso</h2></div><div class="small" style="margin-bottom:10px">Clique no status para alterar. Use "RP" (Reprovado) ou "Falta".</div>`;
   per.forEach(p=>{
-    html += `<h3 style="margin-top:18px; color:var(--gold)">Período ${p} <span class="chip">${OBRIGATORIAS.filter(d=>d.per===p).length} disc.</span></h3>
-    <div class="table-responsive">
-    <table><thead><tr>
-      <th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th></tr></thead><tbody>`;
+    html += `<h3 style="margin-top:18px; color:var(--gold)">Período ${p} <span class="chip">${OBRIGATORIAS.filter(d=>d.per===p).length} disc.</span></h3><div class="table-responsive"><table><thead><tr><th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th></tr></thead><tbody>`;
     OBRIGATORIAS.filter(d=>d.per===p).forEach(d=>{
-      const reg = state.disciplinas[d.cod] || {};
-      const st = reg.status || "pendente";
+      const reg = state.disciplinas[d.cod] || {}; const st = reg.status || "pendente";
       const cls = st==="concluida" ? (reg.rp?"danger":"ok") : st==="cursando"?"cur":"pend";
       const label = st==="concluida" ? (reg.rp?"Reprovado":"Concluída") : st==="cursando"?"Cursando":"Pendente";
       const isFalta = reg.statusHist === "Repro Freq";
-      
-      html += `<tr>
-        <td><b>${d.cod}</b><br><span class="small">${d.nome}</span></td>
-        <td>${d.cred}</td>
-        <td>${d.ch}h</td>
-        <td><span class="pill ${cls}" data-cod="${d.cod}">${label}</span></td>
-        <td><input type="number" step="0.01" min="0" max="10" value="${isFalta? 0.00 : reg.nota??""}" ${isFalta ? 'disabled' : ''} placeholder="0-10" data-nota="${d.cod}" style="width:65px; padding:6px; text-align:center; ${isFalta?'opacity:0.5;':''}"></td>
-        <td><input type="checkbox" ${reg.rp?'checked':''} data-rp="${d.cod}" style="width:20px;height:20px;accent-color:var(--danger)"></td>
-        <td><input type="checkbox" ${isFalta?'checked':''} data-falta="${d.cod}" style="width:20px;height:20px;accent-color:var(--warn)"></td>
-      </tr>`;
+      html += `<tr><td><b>${d.cod}</b><br><span class="small">${d.nome}</span></td><td>${d.cred}</td><td>${d.ch}h</td><td><span class="pill ${cls}" data-cod="${d.cod}">${label}</span></td><td><input type="number" step="0.01" min="0" max="10" value="${isFalta? 0.00 : reg.nota??""}" ${isFalta ? 'disabled' : ''} placeholder="0-10" data-nota="${d.cod}" style="width:65px; padding:6px; text-align:center; ${isFalta?'opacity:0.5;':''}"></td><td><input type="checkbox" ${reg.rp?'checked':''} data-rp="${d.cod}" style="width:20px;height:20px;accent-color:var(--danger)"></td><td><input type="checkbox" ${isFalta?'checked':''} data-falta="${d.cod}" style="width:20px;height:20px;accent-color:var(--warn)"></td></tr>`;
     });
     html += `</tbody></table></div>`;
   });
-  html += `</div>`;
-
-  html += `<div class="card ornament" style="margin-top:16px"><div class="section-title"><span class="ico">🧩</span><h2>Optativas</h2></div>
-  <div class="table-responsive">
-  <table><thead><tr><th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th></tr></thead><tbody>`;
+  html += `</div><div class="card ornament" style="margin-top:16px"><div class="section-title"><span class="ico">🧩</span><h2>Optativas</h2></div><div class="table-responsive"><table><thead><tr><th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th></tr></thead><tbody>`;
   OPTATIVAS.forEach(d=>{
-    const reg = state.disciplinas[d.cod] || {};
-    const st = reg.status || "pendente";
+    const reg = state.disciplinas[d.cod] || {}; const st = reg.status || "pendente";
     const cls = st==="concluida" ? (reg.rp?"danger":"ok") : st==="cursando"?"cur":"pend";
     const label = st==="concluida" ? (reg.rp?"Reprovado":"Concluída") : st==="cursando"?"Cursando":"—";
     const isFalta = reg.statusHist === "Repro Freq";
-    
-    html += `<tr>
-      <td><b>${d.cod}</b><br><span class="small">${d.nome}</span></td>
-      <td>${d.cred}</td>
-      <td>${d.ch}h</td>
-      <td><span class="pill ${cls}" data-cod="${d.cod}">${label}</span></td>
-      <td><input type="number" step="0.01" min="0" max="10" value="${isFalta? 0.00 : reg.nota??""}" ${isFalta ? 'disabled' : ''} placeholder="0-10" data-nota="${d.cod}" style="width:65px; padding:6px; text-align:center; ${isFalta?'opacity:0.5;':''}"></td>
-      <td><input type="checkbox" ${reg.rp?'checked':''} data-rp="${d.cod}" style="width:20px;height:20px;accent-color:var(--danger)"></td>
-      <td><input type="checkbox" ${isFalta?'checked':''} data-falta="${d.cod}" style="width:20px;height:20px;accent-color:var(--warn)"></td>
-    </tr>`;
+    html += `<tr><td><b>${d.cod}</b><br><span class="small">${d.nome}</span></td><td>${d.cred}</td><td>${d.ch}h</td><td><span class="pill ${cls}" data-cod="${d.cod}">${label}</span></td><td><input type="number" step="0.01" min="0" max="10" value="${isFalta? 0.00 : reg.nota??""}" ${isFalta ? 'disabled' : ''} placeholder="0-10" data-nota="${d.cod}" style="width:65px; padding:6px; text-align:center; ${isFalta?'opacity:0.5;':''}"></td><td><input type="checkbox" ${reg.rp?'checked':''} data-rp="${d.cod}" style="width:20px;height:20px;accent-color:var(--danger)"></td><td><input type="checkbox" ${isFalta?'checked':''} data-falta="${d.cod}" style="width:20px;height:20px;accent-color:var(--warn)"></td></tr>`;
   });
   html += `</tbody></table></div></div>`;
-
   root.innerHTML = html;
 
-  $$("[data-cod]", root).forEach(el=>{
-    el.onclick = (e)=>{
-      e.preventDefault();
-      const cod = el.dataset.cod;
-      const cur = state.disciplinas[cod]?.status || "pendente";
-      const next = cur==="pendente"?"cursando":cur==="cursando"?"concluida":"pendente";
-      
-      if(next!=="pendente"){
-        const pend = prerequisitosPendentes(cod);
-        if(pend.length){
-          const ok = confirm(`Atenção: pré-requisito(s) pendente(s): ${pend.join(", ")}.\nDeseja marcar mesmo assim?`);
-          if(!ok) return;
-        }
-      }
-      
-      state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {status:next});
-      if(next === "pendente") {
-        state.disciplinas[cod].rp = false;
-        state.disciplinas[cod].statusHist = "";
-      }
-      
-      saveState();
-      registrarAtividade(`Disciplina ${cod} alterada para ${next}`);
-      renderView(abaAtiva, false); 
-    };
-  });
-
-  $$("[data-nota]", root).forEach(inp=>{
-    inp.onchange = ()=>{
-      const cod = inp.dataset.nota;
-      const v = inp.value===""? null : Number(inp.value);
-      if(v!=null && (isNaN(v)||v<0||v>10)) return toast("Nota deve estar entre 0 e 10.","danger");
-      state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {nota:v});
-      if(v!=null && !state.disciplinas[cod].status) state.disciplinas[cod].status="concluida";
-      saveState();
-      registrarAtividade(`Nota ${v??"—"} registrada em ${cod}`);
-      renderView(abaAtiva, false);
-    };
-  });
-
-  $$("[data-rp]", root).forEach(inp=>{
-    inp.onchange = ()=>{
-      const cod = inp.dataset.rp;
-      const isRp = inp.checked;
-      state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {rp: isRp});
-      if(isRp && state.disciplinas[cod].status !== "concluida") state.disciplinas[cod].status = "concluida";
-      saveState();
-      renderView(abaAtiva, false);
-    };
-  });
-
-  $$("[data-falta]", root).forEach(inp=>{
-    inp.onchange = ()=>{
-      const cod = inp.dataset.falta;
-      const isFalta = inp.checked;
-      state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {
-        statusHist: isFalta ? "Repro Freq" : "",
-        rp: isFalta ? true : state.disciplinas[cod].rp,
-        status: isFalta ? "concluida" : state.disciplinas[cod].status,
-        nota: isFalta ? 0.00 : state.disciplinas[cod].nota
-      });
-      saveState();
-      renderView(abaAtiva, false);
-    };
-  });
+  $$("[data-cod]", root).forEach(el=>{ el.onclick = (e)=>{ e.preventDefault(); const cod = el.dataset.cod; const cur = state.disciplinas[cod]?.status || "pendente"; const next = cur==="pendente"?"cursando":cur==="cursando"?"concluida":"pendente"; if(next!=="pendente"){ const pend = prerequisitosPendentes(cod); if(pend.length){ const ok = confirm(`Atenção: pré-requisito(s) pendente(s): ${pend.join(", ")}.\nDeseja marcar mesmo assim?`); if(!ok) return; } } state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {status:next}); if(next === "pendente") { state.disciplinas[cod].rp = false; state.disciplinas[cod].statusHist = ""; } saveState(); registrarAtividade(`Disciplina ${cod} alterada para ${next}`); renderView(abaAtiva, false); }; });
+  $$("[data-nota]", root).forEach(inp=>{ inp.onchange = ()=>{ const cod = inp.dataset.nota; const v = inp.value===""? null : Number(inp.value); if(v!=null && (isNaN(v)||v<0||v>10)) return toast("Nota deve estar entre 0 e 10.","danger"); state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {nota:v}); if(v!=null && !state.disciplinas[cod].status) state.disciplinas[cod].status="concluida"; saveState(); registrarAtividade(`Nota ${v??"—"} registrada em ${cod}`); renderView(abaAtiva, false); }; });
+  $$("[data-rp]", root).forEach(inp=>{ inp.onchange = ()=>{ const cod = inp.dataset.rp; const isRp = inp.checked; state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {rp: isRp}); if(isRp && state.disciplinas[cod].status !== "concluida") state.disciplinas[cod].status = "concluida"; saveState(); renderView(abaAtiva, false); }; });
+  $$("[data-falta]", root).forEach(inp=>{ inp.onchange = ()=>{ const cod = inp.dataset.falta; const isFalta = inp.checked; state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, { statusHist: isFalta ? "Repro Freq" : "", rp: isFalta ? true : state.disciplinas[cod].rp, status: isFalta ? "concluida" : state.disciplinas[cod].status, nota: isFalta ? 0.00 : state.disciplinas[cod].nota }); saveState(); renderView(abaAtiva, false); }; });
 }
 
 function viewSemestre(root){
-  const sem = state.semestreAtual;
-  const disp = OBRIGATORIAS.concat(OPTATIVAS);
-  let html = `<div class="card ornament">
-    <div class="section-title"><span class="ico">📝</span><h2>Meu semestre</h2></div>
-    <div class="row" style="margin-bottom:12px">
-      <select id="selDisc" style="flex:1"><option value="">Selecione a disciplina…</option>
-      ${disp.map(d=>`<option value="${d.cod}">${d.cod} – ${d.nome}</option>`).join("")}
-      </select>
-      <button id="btnAddDisc" style="width:auto">Adicionar</button>
-    </div>
-    <div class="table-responsive">
-    <table><thead><tr><th>Disciplina</th><th>Avaliações (nota × peso)</th><th>Média</th><th></th></tr></thead><tbody>`;
-  if(!sem.disciplinas.length){
-    html += `<tr><td colspan="4" class="small">Nenhuma disciplina em andamento. Adicione uma acima.</td></tr>`;
-  }else{
-    sem.disciplinas.forEach(cod=>{
-      const d = disp.find(x=>x.cod===cod); if(!d) return;
-      const avs = sem.avaliacoes[cod] || [];
-      const media = mediaPonderada(avs);
-      html += `<tr>
-        <td><b>${d.cod}</b><br><span class="small">${d.nome}</span></td>
-        <td>
-          <div class="small">${avs.map((a,i)=>`${a.nome}: ${a.nota} (p${a.peso}) <button class="ghost" data-delav="${cod}|${i}" style="padding:2px 8px; width:auto; font-size:10px;">×</button>`).join("<br>") || "—"}</div>
-          <div class="row" style="margin-top:8px; flex-wrap:nowrap; gap:4px;">
-            <input placeholder="Av" class="inpAvNome" data-cod="${cod}" style="flex:1; padding:6px; font-size:12px;">
-            <input placeholder="Nota" type="number" step="0.1" class="inpAvNota" data-cod="${cod}" style="width:55px; padding:6px; font-size:12px;">
-            <input placeholder="Peso" type="number" step="1" value="1" class="inpAvPeso" data-cod="${cod}" style="width:50px; padding:6px; font-size:12px;">
-            <button class="ghost" data-addav="${cod}" style="padding:6px 10px; width:auto;">+</button>
-          </div>
-        </td>
-        <td><b>${media===null?"—":fmt(media)}</b></td>
-        <td><button class="danger" data-remdisc="${cod}" style="padding:6px 10px; width:auto;">X</button></td>
-      </tr>`;
-    });
-  }
-  html += `</tbody></table></div></div>`;
-  root.innerHTML = html;
+  const sem = state.semestreAtual; const disp = OBRIGATORIAS.concat(OPTATIVAS);
+  let html = `<div class="card ornament"><div class="section-title"><span class="ico">📝</span><h2>Meu semestre</h2></div><div class="row" style="margin-bottom:12px"><select id="selDisc" style="flex:1"><option value="">Selecione a disciplina…</option>${disp.map(d=>`<option value="${d.cod}">${d.cod} – ${d.nome}</option>`).join("")}</select><button id="btnAddDisc" style="width:auto">Adicionar</button></div><div class="table-responsive"><table><thead><tr><th>Disciplina</th><th>Avaliações (nota × peso)</th><th>Média</th><th></th></tr></thead><tbody>`;
+  if(!sem.disciplinas.length){ html += `<tr><td colspan="4" class="small">Nenhuma disciplina em andamento. Adicione uma acima.</td></tr>`; } 
+  else { sem.disciplinas.forEach(cod=>{ const d = disp.find(x=>x.cod===cod); if(!d) return; const avs = sem.avaliacoes[cod] || []; const media = mediaPonderada(avs); html += `<tr><td><b>${d.cod}</b><br><span class="small">${d.nome}</span></td><td><div class="small">${avs.map((a,i)=>`${a.nome}: ${a.nota} (p${a.peso}) <button class="ghost" data-delav="${cod}|${i}" style="padding:2px 8px; width:auto; font-size:10px;">×</button>`).join("<br>") || "—"}</div><div class="row" style="margin-top:8px; flex-wrap:nowrap; gap:4px;"><input placeholder="Av" class="inpAvNome" data-cod="${cod}" style="flex:1; padding:6px; font-size:12px;"><input placeholder="Nota" type="number" step="0.1" class="inpAvNota" data-cod="${cod}" style="width:55px; padding:6px; font-size:12px;"><input placeholder="Peso" type="number" step="1" value="1" class="inpAvPeso" data-cod="${cod}" style="width:50px; padding:6px; font-size:12px;"><button class="ghost" data-addav="${cod}" style="padding:6px 10px; width:auto;">+</button></div></td><td><b>${media===null?"—":fmt(media)}</b></td><td><button class="danger" data-remdisc="${cod}" style="padding:6px 10px; width:auto;">X</button></td></tr>`; }); }
+  html += `</tbody></table></div></div>`; root.innerHTML = html;
 
-  $("#btnAddDisc", root).onclick = ()=>{
-    const cod = $("#selDisc", root).value; if(!cod) return;
-    if(!sem.disciplinas.includes(cod)) sem.disciplinas.push(cod);
-    saveState(); renderView(abaAtiva, false);
-  };
-  $$("[data-remdisc]", root).forEach(b=>{
-    b.onclick = ()=>{ sem.disciplinas = sem.disciplinas.filter(c=>c!==b.dataset.remdisc); delete sem.avaliacoes[b.dataset.remdisc]; saveState(); renderView(abaAtiva, false); };
-  });
-  $$("[data-addav]", root).forEach(b=>{
-    b.onclick = ()=>{
-      const cod = b.dataset.addav;
-      const row = b.closest("tr");
-      const nome = $(".inpAvNome", row).value.trim() || "Av";
-      const nota = parseFloat($(".inpAvNota", row).value);
-      const peso = parseFloat($(".inpAvPeso", row).value) || 1;
-      if(isNaN(nota)) return toast("Informe uma nota válida.", "danger");
-      sem.avaliacoes[cod] = sem.avaliacoes[cod] || [];
-      sem.avaliacoes[cod].push({nome, nota, peso});
-      saveState(); renderView(abaAtiva, false);
-    };
-  });
-  $$("[data-delav]", root).forEach(b=>{
-    b.onclick = ()=>{
-      const [cod, idx] = b.dataset.delav.split("|");
-      sem.avaliacoes[cod].splice(parseInt(idx),1); saveState(); renderView(abaAtiva, false);
-    };
-  });
+  $("#btnAddDisc", root).onclick = ()=>{ const cod = $("#selDisc", root).value; if(!cod) return; if(!sem.disciplinas.includes(cod)) sem.disciplinas.push(cod); saveState(); renderView(abaAtiva, false); };
+  $$("[data-remdisc]", root).forEach(b=>{ b.onclick = ()=>{ sem.disciplinas = sem.disciplinas.filter(c=>c!==b.dataset.remdisc); delete sem.avaliacoes[b.dataset.remdisc]; saveState(); renderView(abaAtiva, false); }; });
+  $$("[data-addav]", root).forEach(b=>{ b.onclick = ()=>{ const cod = b.dataset.addav; const row = b.closest("tr"); const nome = $(".inpAvNome", row).value.trim() || "Av"; const nota = parseFloat($(".inpAvNota", row).value); const peso = parseFloat($(".inpAvPeso", row).value) || 1; if(isNaN(nota)) return toast("Informe uma nota válida.", "danger"); sem.avaliacoes[cod] = sem.avaliacoes[cod] || []; sem.avaliacoes[cod].push({nome, nota, peso}); saveState(); renderView(abaAtiva, false); }; });
+  $$("[data-delav]", root).forEach(b=>{ b.onclick = ()=>{ const [cod, idx] = b.dataset.delav.split("|"); sem.avaliacoes[cod].splice(parseInt(idx),1); saveState(); renderView(abaAtiva, false); }; });
 }
 
 function viewHorario(root){
-  const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  const horarios = ["07:00", "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
-  
+  const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]; const horarios = ["07:00", "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
   if(!state.quadroHorario) state.quadroHorario = {};
-
-  let html = `<div class="card ornament">
-    <div class="section-title"><span class="ico">🕒</span><h2>Quadro de Horário</h2></div>
-    <div class="row" style="margin-bottom:15px; background:rgba(76,201,240,.05); padding:15px; border-radius:10px;">
-      <select id="qhDisc" style="flex:2">
-        <option value="">Selecione a disciplina…</option>
-        ${OBRIGATORIAS.concat(OPTATIVAS).map(d=>`<option value="${d.nome}">${d.cod} – ${d.nome}</option>`).join("")}
-      </select>
-      <select id="qhDia" style="flex:1">
-        ${dias.map(d=>`<option value="${d}">${d}</option>`).join("")}
-      </select>
-      <input type="time" id="qhIni" style="flex:1" value="19:00">
-      <input type="time" id="qhFim" style="flex:1" value="20:40">
-      <button id="btnAddQH" style="width:auto">Adicionar</button>
-    </div>
-
-    <div class="table-responsive">
-      <div class="grade-horario">
-        <div class="grade-header" style="background:transparent; border:none;"></div>
-        ${dias.map(d => `<div class="grade-header">${d}</div>`).join("")}
-        
-        ${horarios.map(h => `
-          <div class="grade-hora">${h}</div>
-          ${dias.map(d => {
-            const aulas = Object.values(state.quadroHorario).filter(a => a.dia === d && a.ini.startsWith(h));
-            return `<div class="grade-celula">
-              ${aulas.map(a => `
-                <div style="position:relative; width:100%; height:100%;">
-                  <div class="disc-nome">${a.nome.substring(0, 15)}${a.nome.length>15?'...':''}</div>
-                  <div class="disc-hora">${a.ini} - ${a.fim}</div>
-                  <button class="btn-del" data-delqh="${a.id}">×</button>
-                </div>
-              `).join("")}
-            </div>`;
-          }).join("")}
-        `).join("")}
-      </div>
-    </div>
-    <div class="small" style="margin-top:10px; text-align:center; color:var(--muted)">
-      As aulas são plotadas com base no horário de início. A grade vai de 07:00 até 21:00.
-    </div>
-  </div>`;
-
+  let html = `<div class="card ornament"><div class="section-title"><span class="ico">🕒</span><h2>Quadro de Horário</h2></div><div class="row" style="margin-bottom:15px; background:rgba(76,201,240,.05); padding:15px; border-radius:10px;"><select id="qhDisc" style="flex:2"><option value="">Selecione a disciplina…</option>${OBRIGATORIAS.concat(OPTATIVAS).map(d=>`<option value="${d.nome}">${d.cod} – ${d.nome}</option>`).join("")}</select><select id="qhDia" style="flex:1">${dias.map(d=>`<option value="${d}">${d}</option>`).join("")}</select><input type="time" id="qhIni" style="flex:1" value="19:00"><input type="time" id="qhFim" style="flex:1" value="20:40"><button id="btnAddQH" style="width:auto">Adicionar</button></div><div class="table-responsive"><div class="grade-horario"><div class="grade-header" style="background:transparent; border:none;"></div>${dias.map(d => `<div class="grade-header">${d}</div>`).join("")}${horarios.map(h => `<div class="grade-hora">${h}</div>${dias.map(d => { const aulas = Object.values(state.quadroHorario).filter(a => a.dia === d && a.ini.startsWith(h)); return `<div class="grade-celula">${aulas.map(a => `<div style="position:relative; width:100%; height:100%;"><div class="disc-nome">${a.nome.substring(0, 15)}${a.nome.length>15?'...':''}</div><div class="disc-hora">${a.ini} - ${a.fim}</div><button class="btn-del" data-delqh="${a.id}">×</button></div>`).join("")}</div>`; }).join("")}`).join("")}</div></div></div>`;
   root.innerHTML = html;
 
   $("#btnAddQH", root).onclick = () => {
-    const disc = $("#qhDisc", root).value;
-    const dia = $("#qhDia", root).value;
-    const ini = $("#qhIni", root).value;
-    const fim = $("#qhFim", root).value;
-
-    if(!disc || !dia || !ini || !fim) return toast("Preencha todos os campos.", "danger");
-    if(ini >= fim) return toast("O horário de início deve ser menor que o de fim.", "danger");
-
-    const id = Date.now().toString();
-    state.quadroHorario[id] = { id, nome: disc, dia, ini, fim };
-    
+    const disc = $("#qhDisc", root).value; const dia = $("#qhDia", root).value; const ini = $("#qhIni", root).value; const fim = $("#qhFim", root).value;
+    if(!disc || !dia || !ini || !fim) return toast("Preencha todos os campos.", "danger"); if(ini >= fim) return toast("O horário de início deve ser menor que o de fim.", "danger");
+    const id = Date.now().toString(); state.quadroHorario[id] = { id, nome: disc, dia, ini, fim };
     const codDisc = OBRIGATORIAS.concat(OPTATIVAS).find(d => d.nome === disc)?.cod;
-    if(codDisc) {
-      if(!state.horarios[codDisc]) state.horarios[codDisc] = [];
-      state.horarios[codDisc].push({dia: dia.toLowerCase(), ini, fim});
-    }
-
-    saveState();
-    registrarAtividade(`Aula adicionada ao quadro: ${disc} (${dia} ${ini}-${fim})`);
-    renderView(abaAtiva, false);
+    if(codDisc) { if(!state.horarios[codDisc]) state.horarios[codDisc] = []; state.horarios[codDisc].push({dia: dia.toLowerCase(), ini, fim}); }
+    saveState(); registrarAtividade(`Aula adicionada: ${disc} (${dia} ${ini}-${fim})`); renderView(abaAtiva, false);
   };
-
-  $$("[data-delqh]", root).forEach(b => {
-    b.onclick = () => {
-      const id = b.dataset.delqh;
-      delete state.quadroHorario[id];
-      saveState();
-      renderView(abaAtiva, false);
-    };
-  });
+  $$("[data-delqh]", root).forEach(b => { b.onclick = () => { delete state.quadroHorario[b.dataset.delqh]; saveState(); renderView(abaAtiva, false); }; });
 }
 
 function viewCR(root){
-  const cr = calcularCR();
-  const itens = cr.itens;
-  let html = `<div class="card cr"><div class="section-title"><span class="ico">📈</span><h2>Coeficiente de Rendimento (CR)</h2></div>
-    <div class="grid cols-3">
-      <div><div class="label">CR GERAL (UFAM)</div><div class="stat">${cr.cr?fmt(cr.cr):"—"}</div></div>
-      <div><div class="label">TENTATIVAS NO CÁLCULO</div><div class="stat">${itens.length}</div></div>
-      <div><div class="label">TOTAL DE CH NO CÁLCULO</div><div class="stat">${itens.reduce((s,i)=>s+i.ch,0)} h</div></div>
-    </div>
-    <div class="small" style="margin-top:10px">CR = Σ(nota × CH) ÷ Σ(CH). <strong>Nota: o cálculo inclui as disciplinas reprovadas (mesmo por falta, com a nota que o aluno obteve).</strong></div>
-    <div class="onda">
-      <svg viewBox="0 0 300 36" preserveAspectRatio="none">
-        <path d="M0,18 Q15,0 30,18 T60,18 T90,18 T120,18 T150,18 T180,18 T210,18 T240,18 T270,18 T300,18"/>
-      </svg>
-    </div>
-  </div>`;
-
+  const cr = calcularCR(); const itens = cr.itens;
+  let html = `<div class="card cr"><div class="section-title"><span class="ico">📈</span><h2>Coeficiente de Rendimento (CR)</h2></div><div class="grid cols-3"><div><div class="label">CR GERAL (UFAM)</div><div class="stat">${cr.cr?fmt(cr.cr):"—"}</div></div><div><div class="label">TENTATIVAS NO CÁLCULO</div><div class="stat">${itens.length}</div></div><div><div class="label">TOTAL DE CH NO CÁLCULO</div><div class="stat">${itens.reduce((s,i)=>s+i.ch,0)} h</div></div></div></div>`;
   const semestres = Object.keys(cr.semestres||{}).sort();
-  if(semestres.length){
-    const max = Math.max(...semestres.map(s=>cr.semestres[s]));
-    html += `<div class="card cr" style="margin-top:16px"><div class="section-title"><span class="ico">📊</span><h2>Evolução do CR por semestre</h2></div>
-      <div class="chart">`;
-    semestres.forEach(s=>{
-      const v = cr.semestres[s];
-      const h = Math.max(6, (v/max)*140);
-      html += `<div class="col" title="${s}: ${fmt(v)}">
-        <div class="barra" style="height:${h}px"></div>
-        <div class="rot">${s}<br>${fmt(v)}</div>
-      </div>`;
-    });
-    html += `</div></div>`;
-  }
-
-  if(itens.length){
-    html += `<div class="card cr" style="margin-top:16px"><div class="section-title"><span class="ico">📚</span><h2>Notas por disciplina</h2></div>
-      <div class="chart">`;
-    itens.forEach(i=>{
-      const h = Math.max(6, (i.nota/10)*140);
-      const cor = i.rp ? 'linear-gradient(180deg,#e74c3c,#c0392b)' : 'linear-gradient(180deg,#f72585,#4cc9f0)';
-      html += `<div class="col" title="${i.cod}: ${i.nota} ${i.rp?'(RP)':''}">
-        <div class="barra" style="height:${h}px;background:${cor}"></div>
-        <div class="rot">${i.cod}<br>${i.nota}${i.rp?'*':''}</div>
-      </div>`;
-    });
-    html += `</div></div>`;
-  }
-
-  html += `<div class="card cr" style="margin-top:16px"><div class="section-title"><span class="ico">🧾</span><h2>Detalhamento</h2></div>
-    <div class="table-responsive">
-    <table><thead><tr><th>Disciplina</th><th>CH</th><th>Nota</th><th>Sem.</th><th>Status</th></tr></thead><tbody>`;
+  if(semestres.length){ const max = Math.max(...semestres.map(s=>cr.semestres[s])); html += `<div class="card cr" style="margin-top:16px"><div class="section-title"><span class="ico">📊</span><h2>Evolução do CR por semestre</h2></div><div class="chart">`; semestres.forEach(s=>{ const v = cr.semestres[s]; const h = Math.max(6, (v/max)*140); html += `<div class="col" title="${s}: ${fmt(v)}"><div class="barra" style="height:${h}px"></div><div class="rot">${s}<br>${fmt(v)}</div></div>`; }); html += `</div></div>`; }
+  if(itens.length){ html += `<div class="card cr" style="margin-top:16px"><div class="section-title"><span class="ico">📚</span><h2>Notas por disciplina</h2></div><div class="chart">`; itens.forEach(i=>{ const h = Math.max(6, (i.nota/10)*140); const cor = i.rp ? 'linear-gradient(180deg,#e74c3c,#c0392b)' : 'linear-gradient(180deg,#f72585,#4cc9f0)'; html += `<div class="col" title="${i.cod}: ${i.nota} ${i.rp?'(RP)':''}"><div class="barra" style="height:${h}px;background:${cor}"></div><div class="rot">${i.cod}<br>${i.nota}${i.rp?'*':''}</div></div>`; }); html += `</div></div>`; }
+  html += `<div class="card cr" style="margin-top:16px"><div class="section-title"><span class="ico">🧾</span><h2>Detalhamento</h2></div><div class="table-responsive"><table><thead><tr><th>Disciplina</th><th>CH</th><th>Nota</th><th>Sem.</th><th>Status</th></tr></thead><tbody>`;
   if(!itens.length) html += `<tr><td colspan="5" class="small">Nenhuma nota registrada.</td></tr>`;
-  itens.forEach(i=>{
-    html += `<tr>
-      <td><b>${i.cod}</b></td><td>${i.ch}h</td>
-      <td style="color:${i.rp?'var(--danger)':'var(--ok)'}">${i.nota}</td>
-      <td>${i.sem}</td>
-      <td>${i.rp ? '<span class="pill danger">Rep.</span>' : '<span class="pill ok">Aprov.</span>'}</td>
-    </tr>`;
-  });
-  html += `</tbody></table></div></div>`;
-
-  root.innerHTML = html;
+  itens.forEach(i=>{ html += `<tr><td><b>${i.cod}</b></td><td>${i.ch}h</td><td style="color:${i.rp?'var(--danger)':'var(--ok)'}">${i.nota}</td><td>${i.sem}</td><td>${i.rp ? '<span class="pill danger">Rep.</span>' : '<span class="pill ok">Aprov.</span>'}</td></tr>`; });
+  html += `</tbody></table></div></div>`; root.innerHTML = html;
 }
 
 function viewPrereq(root){
-  const pend = [];
-  OBRIGATORIAS.forEach(d=>{
-    const r = state.disciplinas[d.cod];
-    if(r && r.status==="concluida" && !r.rp) return;
-    const faltam = prerequisitosPendentes(d.cod);
-    if(faltam.length) pend.push({d, faltam});
-  });
+  const pend = []; OBRIGATORIAS.forEach(d=>{ const r = state.disciplinas[d.cod]; if(r && r.status==="concluida" && !r.rp) return; const faltam = prerequisitosPendentes(d.cod); if(faltam.length) pend.push({d, faltam}); });
   let html = `<div class="card pre"><div class="section-title"><span class="ico">🔗</span><h2>Disciplinas com pré-requisitos pendentes</h2></div>`;
-  if(!pend.length){
-    html += `<div class="alert ok">Nenhuma pendência de pré-requisito.</div>`;
-  }else{
-    html += `<div class="table-responsive"><table><thead><tr><th>DISCIPLINA</th><th>PERÍODO</th><th>PRÉ-REQUISITOS PENDENTES</th><th>STATUS ATUAL</th></tr></thead><tbody>`;
-    pend.forEach(({d, faltam})=>{
-      const r = state.disciplinas[d.cod] || {};
-      const st = r.status || "pendente";
-      const isRp = r.rp;
-      html += `<tr>
-        <td><b>${d.cod}</b> – ${d.nome}</td>
-        <td>${d.per}º</td>
-        <td>${faltam.map(f=>`<span class="pill danger">${f}</span>`).join(" ")}</td>
-        <td><span class="pill ${isRp?"danger":st==="cursando"?"cur":"pend"}">${isRp?"Reprovado":st}</span></td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
-  }
-  html += `</div>`;
-  root.innerHTML = html;
+  if(!pend.length){ html += `<div class="alert ok">Nenhuma pendência de pré-requisito.</div>`; } else { html += `<div class="table-responsive"><table><thead><tr><th>DISCIPLINA</th><th>PERÍODO</th><th>PRÉ-REQUISITOS PENDENTES</th><th>STATUS ATUAL</th></tr></thead><tbody>`; pend.forEach(({d, faltam})=>{ const r = state.disciplinas[d.cod] || {}; const st = r.status || "pendente"; const isRp = r.rp; html += `<tr><td><b>${d.cod}</b> – ${d.nome}</td><td>${d.per}º</td><td>${faltam.map(f=>`<span class="pill danger">${f}</span>`).join(" ")}</td><td><span class="pill ${isRp?"danger":st==="cursando"?"cur":"pend"}">${isRp?"Reprovado":st}</span></td></tr>`; }); html += `</tbody></table></div>`; }
+  html += `</div>`; root.innerHTML = html;
 }
 
 function viewSimulador(root){
-  const disp = OBRIGATORIAS.concat(OPTATIVAS);
-  const sim = state.simulacao || [];
-  const creditos = sim.reduce((s,cod)=>{
-    const d = disp.find(x=>x.cod===cod); return s + (d? d.cred:0);
-  },0);
-
-  const erros = [];
-  sim.forEach(cod=>{
-    const pend = prerequisitosPendentes(cod);
-    if(pend.length) erros.push(`${cod}: pré-requisito(s): ${pend.join(", ")}`);
-  });
-  for(let i=0;i<sim.length;i++){
-    for(let j=i+1;j<sim.length;j++){
-      if(choqueHorario(sim[i], sim[j])){
-        erros.push(`Choque: ${sim[i]} e ${sim[j]}`);
-      }
-    }
-  }
-  if(creditos > MAX_CREDITOS){
-    erros.push(`Créditos (${creditos}) acima do limite (${MAX_CREDITOS}).`);
-  }
-
-  let html = `<div class="card sim"><div class="section-title"><span class="ico">🧪</span><h2>Simulador de matrícula</h2></div>
-    <div class="alert ok" style="background:rgba(76,201,240,.1); border-color:var(--accent); padding:10px;">
-      Digite o horário (ex: <b>Seg 19:00-20:40</b>) e aperte Enter para testar choques.
-    </div>
-    <div class="grid cols-3" style="margin-top:12px">
-      <div><div class="label">Disciplinas</div><div class="stat">${sim.length}</div></div>
-      <div><div class="label">Créditos</div><div class="stat">${creditos}/${MAX_CREDITOS}</div></div>
-      <div><div class="label">Alertas</div><div class="stat" style="color:${erros.length?"var(--danger)":"var(--ok)"}">${erros.length}</div></div>
-    </div>
-    <div class="row" style="margin-top:14px">
-      <select id="simSel" style="flex:1"><option value="">Adicionar disciplina…</option>
-        ${disp.map(d=>`<option value="${d.cod}">${d.cod} – ${d.nome}</option>`).join("")}
-      </select>
-      <button id="simAdd" style="width:auto">Adicionar</button>
-    </div>
-    <div style="margin-top:12px">
-      ${erros.length? erros.map(e=>`<div class="alert danger">${e}</div>`).join("") : `<div class="alert ok">Tudo certo!</div>`}
-    </div>
-    <div class="table-responsive">
-    <table style="margin-top:12px"><thead><tr><th>Disc.</th><th>Horário</th><th>Status</th><th></th></tr></thead><tbody>`;
-  if(!sim.length){
-    html += `<tr><td colspan="4" class="small">Vazio.</td></tr>`;
-  }else{
-    sim.forEach(cod=>{
-      const d = disp.find(x=>x.cod===cod); if(!d) return;
-      const pend = prerequisitosPendentes(cod);
-      const hs = (state.horarios[cod]||[]).map(h=>`${h.dia} ${h.ini}-${h.fim}`).join("; ");
-      html += `<tr>
-        <td><b>${cod}</b></td>
-        <td><input value="${hs}" placeholder="Seg 19:00" data-simhor="${cod}" style="width:110px; padding:6px;"></td>
-        <td>${pend.length? `<span class="pill danger">Falta</span>` : `<span class="pill ok">OK</span>`}</td>
-        <td><button class="danger" data-simdel="${cod}" style="padding:6px 10px; width:auto;">X</button></td>
-      </tr>`;
-    });
-  }
-  html += `</tbody></table></div>
-  <div class="row" style="margin-top:14px">
-      <button id="simClear" class="danger" style="flex:1">Limpar</button>
-      <button id="simAplicar" class="ok" style="flex:1">Aplicar como "Cursando"</button>
-  </div>
-  </div>`;
-
+  const disp = OBRIGATORIAS.concat(OPTATIVAS); const sim = state.simulacao || [];
+  const creditos = sim.reduce((s,cod)=>{ const d = disp.find(x=>x.cod===cod); return s + (d? d.cred:0); },0);
+  const erros = []; sim.forEach(cod=>{ const pend = prerequisitosPendentes(cod); if(pend.length) erros.push(`${cod}: pré-requisito(s): ${pend.join(", ")}`); });
+  for(let i=0;i<sim.length;i++){ for(let j=i+1;j<sim.length;j++){ if(choqueHorario(sim[i], sim[j])){ erros.push(`Choque: ${sim[i]} e ${sim[j]}`); } } }
+  if(creditos > MAX_CREDITOS){ erros.push(`Créditos (${creditos}) acima do limite (${MAX_CREDITOS}).`); }
+  let html = `<div class="card sim"><div class="section-title"><span class="ico">🧪</span><h2>Simulador de matrícula</h2></div><div class="alert ok" style="background:rgba(76,201,240,.1); border-color:var(--accent); padding:10px;">Digite o horário (ex: <b>Seg 19:00-20:40</b>) e aperte Enter.</div><div class="grid cols-3" style="margin-top:12px"><div><div class="label">Disciplinas</div><div class="stat">${sim.length}</div></div><div><div class="label">Créditos</div><div class="stat">${creditos}/${MAX_CREDITOS}</div></div><div><div class="label">Alertas</div><div class="stat" style="color:${erros.length?"var(--danger)":"var(--ok)"}">${erros.length}</div></div></div><div class="row" style="margin-top:14px"><select id="simSel" style="flex:1"><option value="">Adicionar disciplina…</option>${disp.map(d=>`<option value="${d.cod}">${d.cod} – ${d.nome}</option>`).join("")}</select><button id="simAdd" style="width:auto">Adicionar</button></div><div style="margin-top:12px">${erros.length? erros.map(e=>`<div class="alert danger">${e}</div>`).join("") : `<div class="alert ok">Tudo certo!</div>`}</div><div class="table-responsive"><table style="margin-top:12px"><thead><tr><th>Disc.</th><th>Horário</th><th>Status</th><th></th></tr></thead><tbody>`;
+  if(!sim.length){ html += `<tr><td colspan="4" class="small">Vazio.</td></tr>`; } else { sim.forEach(cod=>{ const d = disp.find(x=>x.cod===cod); if(!d) return; const pend = prerequisitosPendentes(cod); const hs = (state.horarios[cod]||[]).map(h=>`${h.dia} ${h.ini}-${h.fim}`).join("; "); html += `<tr><td><b>${cod}</b></td><td><input value="${hs}" placeholder="Seg 19:00" data-simhor="${cod}" style="width:110px; padding:6px;"></td><td>${pend.length? `<span class="pill danger">Falta</span>` : `<span class="pill ok">OK</span>`}</td><td><button class="danger" data-simdel="${cod}" style="padding:6px 10px; width:auto;">X</button></td></tr>`; }); }
+  html += `</tbody></table></div><div class="row" style="margin-top:14px"><button id="simClear" class="danger" style="flex:1">Limpar</button><button id="simAplicar" class="ok" style="flex:1">Aplicar como "Cursando"</button></div></div>`;
   root.innerHTML = html;
 
-  $("#simAdd", root).onclick = ()=>{
-    const cod = $("#simSel", root).value; if(!cod) return;
-    if(!state.simulacao.includes(cod)) state.simulacao.push(cod);
-    saveState(); renderView(abaAtiva, false);
-  };
+  $("#simAdd", root).onclick = ()=>{ const cod = $("#simSel", root).value; if(!cod) return; if(!state.simulacao.includes(cod)) state.simulacao.push(cod); saveState(); renderView(abaAtiva, false); };
   $("#simClear", root).onclick = ()=>{ state.simulacao = []; saveState(); renderView(abaAtiva, false); };
-  $("#simAplicar", root).onclick = ()=>{
-    state.simulacao.forEach(cod=>{
-      state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {status:"cursando"});
-    });
-    saveState(); toast("Disciplinas marcadas como cursando."); renderView(abaAtiva, false);
-  };
-  $$("[data-simdel]", root).forEach(b=>{
-    b.onclick = ()=>{ state.simulacao = state.simulacao.filter(c=>c!==b.dataset.simdel); saveState(); renderView(abaAtiva, false); };
-  });
-  $$("[data-simhor]", root).forEach(inp=>{
-    inp.onchange = ()=>{
-      const cod = inp.dataset.simhor;
-      const txt = inp.value.trim();
-      const arr = [];
-      if(txt){
-        txt.split(";").forEach(part=>{
-          const m = part.trim().match(/^(\w{3})\s+(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/i);
-          if(m) arr.push({dia:m[1].toLowerCase(), ini:m[2], fim:m[3]});
-        });
-      }
-      state.horarios[cod] = arr;
-      saveState(); renderView(abaAtiva, false);
-    };
-  });
+  $("#simAplicar", root).onclick = ()=>{ state.simulacao.forEach(cod=>{ state.disciplinas[cod] = Object.assign(state.disciplinas[cod]||{}, {status:"cursando"}); }); saveState(); toast("Disciplinas marcadas como cursando."); renderView(abaAtiva, false); };
+  $$("[data-simdel]", root).forEach(b=>{ b.onclick = ()=>{ state.simulacao = state.simulacao.filter(c=>c!==b.dataset.simdel); saveState(); renderView(abaAtiva, false); }; });
+  $$("[data-simhor]", root).forEach(inp=>{ inp.onchange = ()=>{ const cod = inp.dataset.simhor; const txt = inp.value.trim(); const arr = []; if(txt){ txt.split(";").forEach(part=>{ const m = part.trim().match(/^(\w{3})\s+(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/i); if(m) arr.push({dia:m[1].toLowerCase(), ini:m[2], fim:m[3]}); }); } state.horarios[cod] = arr; saveState(); renderView(abaAtiva, false); }; });
 }
 
 function viewCalendario(root){
   const lista = CALENDARIO.map(e=>({...e, dias:diffDias(e.data)})).sort((a,b)=>a.data.localeCompare(b.data));
-  let html = `<div class="card cal"><div class="section-title"><span class="ico">📅</span><h2>Calendário 2026</h2></div>
-  <div class="table-responsive">
-  <table><thead><tr><th>Data</th><th>Evento</th><th>Status</th></tr></thead><tbody>`;
-  lista.forEach(e=>{
-    const dataFmt = e.data.split("-").reverse().join("/") + (e.fim? " a "+e.fim.split("-").reverse().join("/"):"");
-    const sit = e.dias<0? `<span class="pill ok">Fim</span>` :
-                e.dias===0? `<span class="pill danger">Hoje</span>` :
-                `<span class="pill pend">${e.dias}d</span>`;
-    html += `<tr><td><b>${dataFmt}</b></td><td>${e.titulo}</td><td>${sit}</td></tr>`;
-  });
-  html += `</tbody></table></div></div>`;
-  root.innerHTML = html;
+  let html = `<div class="card cal"><div class="section-title"><span class="ico">📅</span><h2>Calendário 2026</h2></div><div class="table-responsive"><table><thead><tr><th>Data</th><th>Evento</th><th>Status</th></tr></thead><tbody>`;
+  lista.forEach(e=>{ const dataFmt = e.data.split("-").reverse().join("/") + (e.fim? " a "+e.fim.split("-").reverse().join("/"):""); const sit = e.dias<0? `<span class="pill ok">Fim</span>` : e.dias===0? `<span class="pill danger">Hoje</span>` : `<span class="pill pend">${e.dias}d</span>`; html += `<tr><td><b>${dataFmt}</b></td><td>${e.titulo}</td><td>${sit}</td></tr>`; });
+  html += `</tbody></table></div></div>`; root.innerHTML = html;
 }
 
 function viewPrazos(root){
-  let html = `<div class="card cal"><div class="section-title"><span class="ico">⏰</span><h2>Prazos e avisos</h2></div>
-  <div class="row" style="margin-bottom:12px">
-    <input id="avTitulo" placeholder="Título do aviso" style="flex:1">
-    <input id="avData" type="date" style="width:130px">
-    <button id="btnAddAviso" style="width:auto">+</button>
-  </div>
-  <div id="listaAvisos"></div>
-  </div>`;
+  let html = `<div class="card cal"><div class="section-title"><span class="ico">⏰</span><h2>Prazos e avisos</h2></div><div class="row" style="margin-bottom:12px"><input id="avTitulo" placeholder="Título do aviso" style="flex:1"><input id="avData" type="date" style="width:130px"><button id="btnAddAviso" style="width:auto">+</button></div><div id="listaAvisos"></div></div>`;
   root.innerHTML = html;
 
   function renderAvisos(){
-    const box = $("#listaAvisos", root);
-    if(!state.avisos.length){ box.innerHTML = `<div class="small">Vazio.</div>`; return; }
+    const box = $("#listaAvisos", root); if(!state.avisos.length){ box.innerHTML = `<div class="small">Vazio.</div>`; return; }
     const ord = [...state.avisos].sort((a,b)=>a.data.localeCompare(b.data));
-    box.innerHTML = ord.map(a=>{
-      const dias = diffDias(a.data);
-      const cls = dias<0?"ok":dias<=3?"danger":dias<=7?"":"pend";
-      return `<div class="alert ${cls}" style="display:flex;justify-content:space-between;align-items:center;">
-        <div><b>${a.titulo}</b><br><span class="small">${a.data.split("-").reverse().join("/")} · ${dias}d</span></div>
-        <button class="danger" data-delaviso="${a.id}" style="padding:6px 10px; width:auto;">X</button>
-      </div>`;
-    }).join("");
-    $$("[data-delaviso]", box).forEach(b=>{
-      b.onclick = ()=>{ state.avisos = state.avisos.filter(x=>x.id!==b.dataset.delaviso); saveState(); renderAvisos(); };
-    });
+    box.innerHTML = ord.map(a=>{ const dias = diffDias(a.data); const cls = dias<0?"ok":dias<=3?"danger":dias<=7?"":"pend"; return `<div class="alert ${cls}" style="display:flex;justify-content:space-between;align-items:center;"><div><b>${a.titulo}</b><br><span class="small">${a.data.split("-").reverse().join("/")} · ${dias}d</span></div><button class="danger" data-delaviso="${a.id}" style="padding:6px 10px; width:auto;">X</button></div>`; }).join("");
+    $$("[data-delaviso]", box).forEach(b=>{ b.onclick = ()=>{ state.avisos = state.avisos.filter(x=>x.id!==b.dataset.delaviso); saveState(); renderAvisos(); }; });
   }
-  $("#btnAddAviso", root).onclick = ()=>{
-    const t=$("#avTitulo",root).value.trim(), d=$("#avData",root).value;
-    if(!t||!d) return toast("Preencha título e data.","danger");
-    state.avisos.push({id:"av"+Date.now(), titulo:t, data:d, prio:"normal"});
-    saveState(); renderAvisos();
-    $("#avTitulo",root).value=""; $("#avData",root).value="";
-  };
+  $("#btnAddAviso", root).onclick = ()=>{ const t=$("#avTitulo",root).value.trim(), d=$("#avData",root).value; if(!t||!d) return toast("Preencha título e data.","danger"); state.avisos.push({id:"av"+Date.now(), titulo:t, data:d, prio:"normal"}); saveState(); renderAvisos(); $("#avTitulo",root).value=""; $("#avData",root).value=""; };
   renderAvisos();
 }
 
 function viewConteudos(root){
-  let html = `<div class="card ornament"><div class="section-title"><span class="ico">🎓</span><h2>Conteúdos</h2></div>
-  <div class="row" style="margin-bottom:14px">
-    <input id="cDisc" placeholder="Disciplina" style="flex:1">
-    <input id="cTit" placeholder="Título" style="flex:1">
-    <input id="cLink" placeholder="Link" style="flex:1">
-    <button id="cAdd" style="width:auto">+</button>
-  </div>
-  <div id="cLista" class="grid cols-2"></div>
-  </div>`;
+  let html = `<div class="card ornament"><div class="section-title"><span class="ico">🎓</span><h2>Conteúdos</h2></div><div class="row" style="margin-bottom:14px"><input id="cDisc" placeholder="Disciplina" style="flex:1"><input id="cTit" placeholder="Título" style="flex:1"><input id="cLink" placeholder="Link" style="flex:1"><button id="cAdd" style="width:auto">+</button></div><div id="cLista" class="grid cols-2"></div></div>`;
   root.innerHTML = html;
 
   function renderLista(){
-    const box = $("#cLista",root);
-    if(!state.conteudos.length){ box.innerHTML = `<div class="small">Vazio.</div>`; return; }
-    box.innerHTML = state.conteudos.map(c=>`
-      <div class="card" style="padding:12px">
-        <div class="flex-between">
-          <span class="chip">${c.disc}</span>
-        </div>
-        <div style="margin:10px 0;font-weight:600; font-size:14px;">${c.titulo}</div>
-        <div class="row">
-          <a href="${c.link}" target="_blank" style="flex:1;"><button class="ghost" style="width:100%">Abrir</button></a>
-          <button class="danger" data-delc="${c.id}" style="width:auto; padding:8px 12px;">X</button>
-        </div>
-      </div>`).join("");
-    $$("[data-delc]", box).forEach(b=>{
-      b.onclick = ()=>{ state.conteudos = state.conteudos.filter(x=>x.id!==b.dataset.delc); saveState(); renderLista(); };
-    });
+    const box = $("#cLista",root); if(!state.conteudos.length){ box.innerHTML = `<div class="small">Vazio.</div>`; return; }
+    box.innerHTML = state.conteudos.map(c=>`<div class="card" style="padding:12px"><div class="flex-between"><span class="chip">${c.disc}</span></div><div style="margin:10px 0;font-weight:600; font-size:14px;">${c.titulo}</div><div class="row"><a href="${c.link}" target="_blank" style="flex:1;"><button class="ghost" style="width:100%">Abrir</button></a><button class="danger" data-delc="${c.id}" style="width:auto; padding:8px 12px;">X</button></div></div>`).join("");
+    $$("[data-delc]", box).forEach(b=>{ b.onclick = ()=>{ state.conteudos = state.conteudos.filter(x=>x.id!==b.dataset.delc); saveState(); renderLista(); }; });
   }
-  $("#cAdd",root).onclick = ()=>{
-    const disc=$("#cDisc",root).value.trim(), titulo=$("#cTit",root).value.trim(), link=$("#cLink",root).value.trim();
-    if(!disc||!titulo||!link) return toast("Preencha tudo.","danger");
-    state.conteudos.push({id:"c"+Date.now(), disc, titulo, link, tipo:"Link"});
-    saveState(); renderLista();
-    $("#cDisc",root).value=""; $("#cTit",root).value=""; $("#cLink",root).value="";
-  };
+  $("#cAdd",root).onclick = ()=>{ const disc=$("#cDisc",root).value.trim(), titulo=$("#cTit",root).value.trim(), link=$("#cLink",root).value.trim(); if(!disc||!titulo||!link) return toast("Preencha tudo.","danger"); state.conteudos.push({id:"c"+Date.now(), disc, titulo, link, tipo:"Link"}); saveState(); renderLista(); $("#cDisc",root).value=""; $("#cTit",root).value=""; $("#cLink",root).value=""; };
   renderLista();
 }
 
 function viewImportar(root){
-  root.innerHTML = `<div class="card imp">
-    <div class="section-title"><span class="ico">📄</span><h2>Importar PDF/Imagem</h2></div>
-    <div class="alert" style="border-color:var(--accent); background:rgba(76,201,240,.05);">
-      <b>Como usar:</b> Carregue o arquivo (PDF/Imagem). O sistema fará o OCR (texto) e usará um <b>sistema matemático de comparação</b> para validar se os códigos existem na matriz e se as notas estão entre 0 e 10. Se houver erro, você será avisado.
-    </div>
-    <div class="row" style="margin:12px 0">
-      <input id="inpFile" type="file" accept=".pdf,image/*" style="flex:1">
-      <button id="btnLimpar" class="ghost" style="width:auto">Limpar</button>
-    </div>
-    <div id="previewBox"></div>
-    <h3 style="margin-top:16px">JSON Validado para importar</h3>
-    <textarea id="jsonOut" style="width:100%;height:150px" placeholder='[{"cod":"ITA201","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea>
-    <button id="btnImportarJson" class="ok" style="width:100%; margin-top:10px;">Validar e Importar JSON</button>
-  </div>`;
+  root.innerHTML = `<div class="card imp"><div class="section-title"><span class="ico">📄</span><h2>Importar PDF/Imagem</h2></div><div class="row" style="margin:12px 0"><input id="inpFile" type="file" accept=".pdf,image/*" style="flex:1"><button id="btnLimpar" class="ghost" style="width:auto">Limpar</button></div><div id="previewBox"></div><h3 style="margin-top:16px">JSON Validado para importar</h3><textarea id="jsonOut" style="width:100%;height:150px" placeholder='[{"cod":"ITA201","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea><button id="btnImportarJson" class="ok" style="width:100%; margin-top:10px;">Validar e Importar JSON</button></div>`;
+  const preview = $("#previewBox", root); const jsonOut = $("#jsonOut", root);
 
-  const preview = $("#previewBox", root);
-  const jsonOut = $("#jsonOut", root);
-
-  $("#inpFile", root).onchange = (e)=>{
-    const f = e.target.files[0]; if(!f) return;
-    preview.innerHTML = "";
-    if(f.type.startsWith("image/")){
-      const img = document.createElement("img");
-      img.className = "preview"; img.style.maxWidth = "100%"; img.style.marginTop="10px";
-      img.src = URL.createObjectURL(f);
-      preview.appendChild(img);
-    }
-  };
-
-  $("#btnLimpar", root).onclick = ()=>{
-    preview.innerHTML = ""; jsonOut.value = "";
-    $("#inpFile", root).value = "";
-  };
-
+  $("#inpFile", root).onchange = (e)=>{ const f = e.target.files[0]; if(!f) return; preview.innerHTML = ""; if(f.type.startsWith("image/")){ const img = document.createElement("img"); img.className = "preview"; img.src = URL.createObjectURL(f); preview.appendChild(img); } };
+  $("#btnLimpar", root).onclick = ()=>{ preview.innerHTML = ""; jsonOut.value = ""; $("#inpFile", root).value = ""; };
+  
   $("#btnImportarJson", root).onclick = ()=>{
     try{
-      const arr = JSON.parse(jsonOut.value);
+      const rawJson = jsonOut.value.trim();
+      if(!rawJson) { toast("A caixa de texto está vazia.", "danger"); return; }
+      const arr = JSON.parse(rawJson);
       if(!Array.isArray(arr)) throw new Error("JSON deve ser uma lista.");
-      
       let erros = [];
       const disciplinasValidas = OBRIGATORIAS.concat(OPTATIVAS);
-
       arr.forEach((it, index) => {
         if(!it.cod) { erros.push(`Item ${index+1}: Código ausente.`); return; }
         const disc = disciplinasValidas.find(d => d.cod === it.cod);
-        if(!disc) { erros.push(`Item ${index+1}: Disciplina ${it.cod} não existe na matriz.`); return; }
-        
-        if(it.nota != null) {
-          const nota = Number(it.nota);
-          if(isNaN(nota) || nota < 0 || nota > 10) {
-            erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida (deve ser 0 a 10).`);
-          }
-        }
+        if(!disc) { erros.push(`Item ${index+1}: Disciplina ${it.cod} não existe.`); return; }
+        if(it.nota != null) { const nota = Number(it.nota); if(isNaN(nota) || nota < 0 || nota > 10) { erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida.`); } }
       });
-
-      if(erros.length > 0) {
-        toast("Erros encontrados na validação. Veja o console.", "danger");
-        console.error("Erros de validação matemática:", erros);
-        alert("Erros encontrados:\n\n" + erros.join("\n"));
-        return;
-      }
-
-      arr.forEach(it=>{
-        state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, {
-          nota: it.nota!=null? Number(it.nota) : null,
-          status: it.status || (it.nota!=null? "concluida":"pendente"),
-          semestre: it.semestre || null,
-          rp: it.rp || false
-        });
-      });
-      saveState();
-      toast("Histórico importado e validado com sucesso!");
-      renderView(abaAtiva, false);
-    }catch(e){ toast("Erro na leitura do JSON: "+e.message,"danger"); }
+      if(erros.length > 0) { toast("Erros encontrados.", "danger"); alert("Erros:\n\n" + erros.join("\n")); return; }
+      arr.forEach(it=>{ state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, { nota: it.nota!=null? Number(it.nota) : null, status: it.status || (it.nota!=null? "concluida":"pendente"), semestre: it.semestre || null, rp: it.rp || false }); });
+      saveState(); toast("Histórico importado!"); renderView(abaAtiva, false);
+    }catch(e){ toast("Erro: "+e.message,"danger"); }
   };
 }
 
 function viewAtividades(root){
   const arr = state.atividades.slice(0,100);
-  let html = `<div class="card ornament"><div class="section-title"><span class="ico">🕘</span><h2>Histórico</h2></div>
-  <div class="scroll"><table><thead><tr><th>Quando</th><th>Atividade</th></tr></thead><tbody>`;
+  let html = `<div class="card ornament"><div class="section-title"><span class="ico">🕘</span><h2>Histórico</h2></div><div class="scroll"><table><thead><tr><th>Quando</th><th>Atividade</th></tr></thead><tbody>`;
   if(!arr.length) html += `<tr><td colspan="2" class="small">Vazio.</td></tr>`;
-  else arr.forEach(a=>{
-    html += `<tr><td class="small">${new Date(a.quando).toLocaleDateString("pt-BR")}</td><td style="font-size:12px;">${a.txt}</td></tr>`;
-  });
-  html += `</tbody></table></div></div>`;
-  root.innerHTML = html;
+  else arr.forEach(a=>{ html += `<tr><td class="small">${new Date(a.quando).toLocaleDateString("pt-BR")}</td><td style="font-size:12px;">${a.txt}</td></tr>`; });
+  html += `</tbody></table></div></div>`; root.innerHTML = html;
 }
 
 function viewConfig(root){
-  root.innerHTML = `<div class="card ornament"><div class="section-title"><span class="ico">⚙️</span><h2>Configurações</h2></div>
-    <div class="grid cols-2">
-      <div>
-        <h3>Trocar de Senha</h3>
-        <p class="small">O Firebase exige segurança. Clique abaixo para receber um link de redefinição de senha no seu e-mail.</p>
-        <button id="btnTrocarSenha" class="ok" style="width:100%;">Enviar link de troca de senha</button>
-        
-        <h3 style="margin-top:20px;">Status da Sincronização</h3>
-        <div class="alert ok">
-          <b>Sincronizado em tempo real!</b><br>
-          Seus dados estão salvos na nuvem (Firebase). Qualquer alteração feita aqui vai aparecer automaticamente nos outros aparelhos que estiverem logados na mesma conta.
-        </div>
-      </div>
-      <div>
-        <h3>Dados</h3>
-        <p class="small">Você pode exportar um arquivo local para segurança extra, ou importar um backup anterior.</p>
-        <div class="row">
-          <button id="cfgExport" class="ghost">Exportar JSON</button>
-          <label class="ghost" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer">
-            Importar backup<input id="cfgImport" type="file" accept=".json" class="hidden">
-          </label>
-        </div>
-        <h3 style="margin-top:18px;color:var(--danger)">Zona de risco</h3>
-        <button id="btnZerar" class="danger">Apagar todos os dados</button>
-      </div>
-    </div>
-  </div>`;
+  root.innerHTML = `<div class="card ornament"><div class="section-title"><span class="ico">⚙️</span><h2>Configurações</h2></div><div class="grid cols-2"><div><h3>Trocar de Senha</h3><p class="small">Enviar link de redefinição de senha para o seu e-mail.</p><button id="btnTrocarSenha" class="ok" style="width:100%;">Enviar link de troca de senha</button><h3 style="margin-top:20px;">Status da Sincronização</h3><div class="alert ok"><b>Sincronizado em tempo real!</b><br>Seus dados estão salvos na nuvem (Firebase).</div></div><div><h3>Dados</h3><p class="small">Exportar backup local.</p><div class="row"><button id="cfgExport" class="ghost">Exportar JSON</button><label class="ghost" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer">Importar backup<input id="cfgImport" type="file" accept=".json" class="hidden"></label></div><h3 style="margin-top:18px;color:var(--danger)">Zona de risco</h3><button id="btnZerar" class="danger">Apagar todos os dados</button></div></div></div>`;
 
-  $("#btnTrocarSenha", root).onclick = () => {
-    if (!currentUser || !currentUser.email) return toast("Você precisa estar logado com e-mail.", "danger");
-    auth.sendPasswordResetEmail(currentUser.email)
-      .then(() => toast("Link enviado para " + currentUser.email, "ok"))
-      .catch((error) => toast("Erro: " + error.message, "danger"));
-  };
-
-  $("#cfgExport",root).onclick = exportar;
-  $("#cfgImport",root).onchange = (e)=>importar(e);
-  $("#btnZerar",root).onclick = ()=>{
-    if(confirm("Apagar TODOS os dados? Esta ação não pode ser desfeita.")){
-      if (currentUser.email === "galvacaio18@gmail.com") state.disciplinas = estadoInicialCaio();
-      else state.disciplinas = estadoInicialLimpo();
-      
-      state.horarios = {};
-      state.quadroHorario = {};
-      state.semestreAtual = {disciplinas:[], avaliacoes:{}};
-      state.avisos = [];
-      state.atividades = [];
-      saveState();
-      renderView(abaAtiva, false);
-      toast("Dados apagados.");
-    }
-  };
+  $("#btnTrocarSenha", root).onclick = () => { if (!currentUser || !currentUser.email) return toast("Você precisa estar logado com e-mail.", "danger"); auth.sendPasswordResetEmail(currentUser.email).then(() => toast("Link enviado para " + currentUser.email, "ok")).catch((error) => toast("Erro: " + error.message, "danger")); };
+  $("#cfgExport",root).onclick = exportar; $("#cfgImport",root).onchange = (e)=>importar(e);
+  $("#btnZerar",root).onclick = ()=>{ if(confirm("Apagar TODOS os dados?")){ if (currentUser.email === "galvacaio18@gmail.com") state.disciplinas = estadoInicialCaio(); else state.disciplinas = estadoInicialLimpo(); state.horarios = {}; state.quadroHorario = {}; state.semestreAtual = {disciplinas:[], avaliacoes:{}}; state.avisos = []; state.atividades = []; saveState(); renderView(abaAtiva, false); toast("Dados apagados."); } };
 }
 
-/* =========================================================
-   8. EXPORTAR / IMPORTAR
-   ========================================================= */
 function exportar(){
   const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `painel-MF-${hojeISO()}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast("Backup exportado.");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `painel-MF-${hojeISO()}.json`; a.click(); URL.revokeObjectURL(a.href); toast("Backup exportado.");
 }
 function importar(ev){
   const f = ev.target.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = ()=>{
-    try{
-      const s = JSON.parse(r.result);
-      state = Object.assign(state, s);
-      saveState(); location.reload();
-    }catch(e){ toast("Falha ao importar: "+e.message,"danger"); }
-  };
+  r.onload = ()=>{ try{ const s = JSON.parse(r.result); state = Object.assign(state, s); saveState(); location.reload(); }catch(e){ toast("Falha ao importar: "+e.message,"danger"); } };
   r.readAsText(f);
 }
-
-$("#btnExport").onclick = exportar;
-$("#fileImport").onchange = (e)=>importar(e);
+$("#btnExport").onclick = exportar; $("#fileImport").onchange = (e)=>importar(e);
 </script>
 </body>
 </html>
