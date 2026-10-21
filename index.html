@@ -126,18 +126,19 @@ a{color:var(--accent)}
 .preview{max-width:100%; max-height:360px; border-radius:12px; border:1px solid var(--line); margin-top:10px; box-shadow:0 10px 26px rgba(0,0,0,.4)}
 .deco{display:flex; justify-content:space-around; align-items:center; gap:10px; margin:14px 0 0; padding:12px; border-top:1px dashed rgba(120,160,255,.18); font-family:'Cambria Math','Times New Roman',serif; color:rgba(160,190,255,.35); font-size:14px; flex-wrap:wrap;}
 
-/* GRADE DE HORÁRIOS */
-.grade-horario { display: grid; grid-template-columns: 80px repeat(6, 1fr); gap: 4px; margin-top: 10px; min-width: 700px;}
-.grade-header { background: #101a36; padding: 8px; text-align: center; font-weight: 700; font-size: 12px; border-radius: 6px; border: 1px solid var(--line); color: var(--accent);}
-.grade-hora { background: #0a1228; padding: 8px; text-align: center; font-size: 11px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center;}
-.grade-celula { background: rgba(76,201,240,.04); border: 1px dashed rgba(76,201,240,.2); border-radius: 6px; padding: 6px; min-height: 60px; position: relative; cursor: pointer; transition: .2s; font-size: 11px; display: flex; flex-direction: column; justify-content: flex-start; gap: 4px;}
+/* GRADE DE HORÁRIOS ATUALIZADA */
+.grade-horario { display: grid; grid-template-columns: 65px repeat(6, 1fr); gap: 6px; margin-top: 10px; min-width: 850px;}
+.grade-header { background: #101a36; padding: 10px; text-align: center; font-weight: 700; font-size: 13px; border-radius: 6px; border: 1px solid var(--line); color: var(--accent);}
+.grade-hora { background: #0a1228; padding: 10px; text-align: center; font-size: 12px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center;}
+.grade-celula { background: rgba(76,201,240,.04); border: 1px dashed rgba(76,201,240,.2); border-radius: 6px; padding: 6px; min-height: 80px; position: relative; cursor: pointer; transition: .2s; display: flex; flex-direction: column; justify-content: flex-start; gap: 4px;}
 .grade-celula:hover { background: rgba(76,201,240,.1); border-color: var(--accent); }
-.grade-celula .disc-nome { font-weight: bold; color: var(--txt); margin-bottom: 2px; font-size: 11px; line-height:1.15;}
-.grade-celula .disc-hora { color: var(--accent); font-size: 10px; font-weight:600;}
-.grade-celula .disc-local { color: var(--gold); font-size: 9px; font-weight: 600; margin-top: 1px; line-height:1.15;}
-.grade-celula .aula-bloco { position:relative; background: rgba(31,111,235,.12); border-radius:4px; padding:3px 4px; margin-bottom:2px; border-left:2px solid var(--accent);}
-.grade-celula .btn-del { position: absolute; top: -4px; right: -4px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; line-height: 14px; cursor: pointer; display: none; padding: 0; z-index:2;}
-.grade-celula:hover .btn-del { display: block; }
+
+.aula-bloco { position:relative; background: rgba(31,111,235,.15); border-radius: 6px; padding: 8px; margin-bottom: 4px; border-left: 3px solid var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.aula-bloco .disc-nome { font-weight: 800; color: #fff; margin-bottom: 4px; font-size: 12px; line-height: 1.25; white-space: normal; word-wrap: break-word;}
+.aula-bloco .disc-hora { color: var(--accent); font-size: 11px; font-weight: 700; margin-bottom: 2px;}
+.aula-bloco .disc-local { color: var(--gold); font-size: 11px; font-weight: 600; line-height: 1.2;}
+.aula-bloco .btn-del { position: absolute; top: 6px; right: 6px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; line-height: 16px; cursor: pointer; display: none; padding: 0; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,.5);}
+.aula-bloco:hover .btn-del { display: block; }
 
 @media(max-width:600px){
   #app{padding:10px 10px 40px}
@@ -151,13 +152,13 @@ a{color:var(--accent)}
   .ring{width:100px;height:100px} .ring span{font-size:17px}
   .atomo{width:36px;height:36px}
   .chart .col .rot {display:none;}
-  .grade-horario { grid-template-columns: 45px repeat(6, 1fr); gap: 2px; min-width: 0;}
-  .grade-header { font-size: 9px; padding: 4px 2px;}
-  .grade-hora { font-size: 8px; padding: 4px 2px;}
-  .grade-celula { font-size: 8px; padding: 3px 2px; min-height: 46px;}
-  .grade-celula .disc-nome { font-size:8px;}
-  .grade-celula .disc-hora { font-size:8px;}
-  .grade-celula .disc-local { font-size:7px;}
+  .grade-horario { grid-template-columns: 50px repeat(6, 1fr); gap: 3px; min-width: 800px;}
+  .grade-header { font-size: 11px; padding: 6px 2px;}
+  .grade-hora { font-size: 10px; padding: 4px 2px;}
+  .grade-celula { font-size: 10px; padding: 4px 2px; min-height: 70px;}
+  .aula-bloco .disc-nome { font-size: 10px;}
+  .aula-bloco .disc-hora { font-size: 9px;}
+  .aula-bloco .disc-local { font-size: 9px;}
 }
 </style>
 </head>
@@ -486,9 +487,7 @@ $("#btnForgot").onclick = (e) => {
 };
 $("#btnLogout").onclick = () => { if (unsubscribeSnapshot) unsubscribeSnapshot(); auth.signOut().then(() => { location.reload(); }); };
 
-/* =========================================================================
-   MOTOR DE EXTRAÇÃO DE PDF/OCR — usado no onboarding e na aba de importação
-   ========================================================================= */
+/* MOTOR DE EXTRAÇÃO */
 async function extrairTextoArquivo(f){
   if (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
     const arrayBuffer = await f.arrayBuffer();
@@ -498,7 +497,6 @@ async function extrairTextoArquivo(f){
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
       const items = content.items;
-      // Reconstrói linhas agrupando por Y (com tolerância), ordena por X
       const linesMap = {};
       items.forEach(item => {
         if (!item.str || !item.str.trim()) return;
@@ -514,7 +512,6 @@ async function extrairTextoArquivo(f){
     }
     return texto;
   } else {
-    // Imagem → OCR
     const { data } = await Tesseract.recognize(f, "por");
     return data.text || "";
   }
@@ -534,7 +531,6 @@ function extrairDisciplinasDoTexto(texto){
   for (const linha of linhas) {
     if (!linha) continue;
 
-    // Detecta cabeçalho de período
     const semHeader = linha.match(/per[íi]odo\s*(?:letivo)?\s*[:\-]?\s*(20\d{2})\s*[\/\-]\s*([12])/i);
     if (semHeader) {
       periodoAtual = `${semHeader[1]}/${semHeader[2]}`;
@@ -548,11 +544,9 @@ function extrairDisciplinasDoTexto(texto){
     const def = codMap[cod];
     if (!def) continue;
 
-    // Semestre: da própria linha ou do último cabeçalho
     const lineSem = linha.match(/\b(20\d{2})\s*[\/\-]\s*([12])\b/);
     const semestre = lineSem ? `${lineSem[1]}/${lineSem[2]}` : periodoAtual;
 
-    // Status
     const upper = linha.toUpperCase();
     let statusHist = "";
     let rp = false;
@@ -561,7 +555,6 @@ function extrairDisciplinasDoTexto(texto){
     else if (/APROV/.test(upper)) { statusHist = "Aprovado"; }
     else if (/MATRICUL|CURSANDO|EM CURSO|TRANCAD/i.test(upper)) { statusHist = "Matrícula"; }
 
-    // Nota — prioriza decimais 0–10
     let nota = null;
     const decs = [...linha.matchAll(/\b(\d{1,2}[.,]\d{1,2})\b/g)].map(m => parseFloat(m[1].replace(",", ".")));
     for (const n of decs) { if (n >= 0 && n <= 10) { nota = n; break; } }
@@ -574,7 +567,6 @@ function extrairDisciplinasDoTexto(texto){
     }
     if (statusHist === "Repro Freq") nota = 0;
 
-    // Status final
     let status = "pendente";
     if (statusHist === "Aprovado" || rp) status = "concluida";
     else if (statusHist === "Matrícula") status = "cursando";
@@ -590,9 +582,7 @@ function extrairDisciplinasDoTexto(texto){
   return resultados;
 }
 
-/* =========================================================================
-   ONBOARDING
-   ========================================================================= */
+/* ONBOARDING */
 function renderOnboarding() {
   const fileInput = $("#inpObFile");
   const statusBox = $("#obStatus");
@@ -660,7 +650,6 @@ function renderOnboarding() {
         });
       });
 
-      // Histórico de tentativas
       if (!state.disciplinas._historicoTentativas) state.disciplinas._historicoTentativas = [];
       importacaoTemp.forEach(it => {
         const existing = state.disciplinas._historicoTentativas.find(t => t.cod === it.cod && t.sem === (it.semestre || "Atual"));
@@ -680,9 +669,7 @@ function renderOnboarding() {
   };
 }
 
-/* =========================================================================
-   HELPERS
-   ========================================================================= */
+/* HELPERS */
 const fmt = n => (Math.round(n*100)/100).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
 function hojeISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
 function toDate(iso){ return new Date(iso+"T00:00:00"); }
@@ -796,9 +783,6 @@ function renderView(i, scrollTop = true){
   if(scrollTop) window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* =========================================================================
-   VIEWS
-   ========================================================================= */
 function viewVisao(root){
   const p = progresso(); const est = estimativaFormatura(); const cr = calcularCR(); const stats = calcStats();
   const proximos = CALENDARIO.map(e=>({...e, dias:diffDias(e.data)})).filter(e=>e.dias>=0).sort((a,b)=>a.dias-b.dias).slice(0,5);
@@ -879,18 +863,25 @@ function viewSemestre(root){
   $$("[data-delav]", root).forEach(b=>{ b.onclick = ()=>{ const [cod, idx] = b.dataset.delav.split("|"); sem.avaliacoes[cod].splice(parseInt(idx),1); saveState(); renderView(abaAtiva, false); }; });
 }
 
-/* =========================================================================
-   QUADRO DE HORÁRIO — vai até 22h, com Piso/Bloco/Sala, preenche várias linhas
-   ========================================================================= */
+/* QUADRO DE HORÁRIO CORRIGIDO */
 function viewHorario(root){
   const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  // Agora inclui 22:00. Última linha exibida = 22:00 (ocupa 22:00–23:00).
   const horarios = ["07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"];
   if(!state.quadroHorario) state.quadroHorario = {};
 
-  // Sobreposição: a aula aparece em toda linha horária que intersecta o intervalo.
-  // Ex.: 14:00–16:00 → aparece em 14:00 e 15:00 (2 quadrados).
-  //      14:00–17:00 → aparece em 14:00, 15:00 e 16:00 (3 quadrados).
+  // Sanitização para remover duplicatas que já possam estar salvas no banco
+  const uniqueKeys = new Set();
+  Object.keys(state.quadroHorario).forEach(id => {
+    const a = state.quadroHorario[id];
+    const key = `${a.cod}_${a.dia}_${a.ini}_${a.fim}`;
+    if (uniqueKeys.has(key)) {
+      delete state.quadroHorario[id];
+    } else {
+      uniqueKeys.add(key);
+    }
+  });
+
+  // Lógica de sobreposição
   function aulaNoSlot(a, h){
     const ini = toMin(a.ini), fim = toMin(a.fim);
     const rs = toMin(h), re = rs + 60;
@@ -921,15 +912,16 @@ function viewHorario(root){
           ${horarios.map(h => `
             <div class="grade-hora">${h}</div>
             ${dias.map(d => {
+              // Filtra aulas no slot e garante que não haja renderização dupla por ID
               const aulas = Object.values(state.quadroHorario).filter(a => a.dia === d && aulaNoSlot(a, h));
+              
               return `<div class="grade-celula">${aulas.map(a => {
-                const local = [a.piso ? `Piso ${a.piso}` : "", a.bloco ? `Bloco ${a.bloco}` : "", a.sala ? `Sala ${a.sala}` : ""].filter(Boolean).join(" · ");
-                const nomeCurto = a.nome.length > 15 ? a.nome.substring(0,15) + "…" : a.nome;
+                const localStr = [a.piso ? `Piso ${a.piso}` : "", a.bloco ? `Bloco ${a.bloco}` : "", a.sala ? `Sala ${a.sala}` : ""].filter(Boolean).join(" · ");
                 return `<div class="aula-bloco">
                   <button class="btn-del" data-delqh="${a.id}" title="Remover aula">×</button>
-                  <div class="disc-nome">${nomeCurto}</div>
+                  <div class="disc-nome">${a.nome}</div>
                   <div class="disc-hora">${a.ini} – ${a.fim}</div>
-                  ${local ? `<div class="disc-local">📍 ${local}</div>` : ""}
+                  ${localStr ? `<div class="disc-local">📍 ${localStr}</div>` : ""}
                 </div>`;
               }).join("")}</div>`;
             }).join("")}
@@ -952,6 +944,10 @@ function viewHorario(root){
     if (!cod || !dia || !ini || !fim) return toast("Preencha disciplina, dia e horários.", "danger");
     if (toMin(ini) >= toMin(fim)) return toast("O horário de início deve ser menor que o de fim.", "danger");
 
+    // Impede cadastro duplicado
+    const existente = Object.values(state.quadroHorario).find(a => a.cod === cod && a.dia === dia && a.ini === ini && a.fim === fim);
+    if (existente) return toast("Essa aula já está cadastrada nesse dia e horário.", "danger");
+
     const def = OBRIGATORIAS.concat(OPTATIVAS).find(d => d.cod === cod);
     if (!def) return toast("Disciplina inválida.", "danger");
 
@@ -973,7 +969,6 @@ function viewHorario(root){
       const id = b.dataset.delqh;
       const aula = state.quadroHorario[id];
       if (aula) {
-        // Remove também do state.horarios
         const h = state.horarios[aula.cod] || [];
         state.horarios[aula.cod] = h.filter(x => !(x.dia === aula.dia.toLowerCase() && x.ini === aula.ini && x.fim === aula.fim));
       }
@@ -984,9 +979,6 @@ function viewHorario(root){
   });
 }
 
-/* =========================================================================
-   CR
-   ========================================================================= */
 function viewCR(root){
   const cr = calcularCR(); const itens = cr.itens;
   let html = `<div class="card cr"><div class="section-title"><span class="ico">📈</span><h2>Coeficiente de Rendimento (CR)</h2></div><div class="grid cols-3"><div><div class="label">CR GERAL (UFAM)</div><div class="stat">${cr.cr?fmt(cr.cr):"—"}</div></div><div><div class="label">TENTATIVAS NO CÁLCULO</div><div class="stat">${itens.length}</div></div><div><div class="label">TOTAL DE CH NO CÁLCULO</div><div class="stat">${itens.reduce((s,i)=>s+i.ch,0)} h</div></div></div></div>`;
@@ -1058,9 +1050,6 @@ function viewConteudos(root){
   renderLista();
 }
 
-/* =========================================================================
-   IMPORTAR — leitura automática de múltiplos PDFs + revisão + JSON
-   ========================================================================= */
 function viewImportar(root){
   root.innerHTML = `
     <div class="card imp">
@@ -1122,7 +1111,6 @@ function viewImportar(root){
       for (let i = 0; i < arquivos.length; i++) {
         const f = arquivos[i];
         statusBox.textContent = `Processando ${i+1}/${arquivos.length}: ${f.name}…`;
-        // ceder para a UI atualizar
         await new Promise(r => setTimeout(r, 30));
         const texto = await extrairTextoArquivo(f);
         const extraidosArq = extrairDisciplinasDoTexto(texto);
