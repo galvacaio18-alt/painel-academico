@@ -4,11 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Painel Acadêmico – MF/UFAM</title>
-<!-- SDKs do Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<!-- Bibliotecas para PDF e OCR -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
@@ -108,7 +106,7 @@ tbody tr:hover td{background:rgba(76,201,240,.07)}
 @keyframes moverOnda{to{stroke-dashoffset:-200}}
 
 .rodape-view{ margin-top:18px; padding:14px; border-radius:12px; text-align:center; font-family:'Cambria Math','Times New Roman',serif; background:linear-gradient(90deg, transparent, rgba(76,201,240,.06), transparent); color:rgba(160,190,255,.55); font-size:13px; letter-spacing:1px; border-top:1px solid rgba(76,201,240,.10); }
-.chip{font-size:11px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:rgba(255,255,255,.02)}
+.chip{font-size:11px; padding:4px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:rgba(255,255,255,.02); display:inline-block; margin:2px;}
 .scroll{max-height:440px; overflow:auto; border-radius:10px;}
 .toast{ position:fixed; right:18px; bottom:18px; left:18px; background:#0a1228; border:1px solid var(--accent); color:var(--txt); padding:15px; border-radius:12px; z-index:99; box-shadow:0 14px 36px rgba(0,0,0,.6); font-size:14px; text-align:center; }
 a{color:var(--accent)}
@@ -128,15 +126,17 @@ a{color:var(--accent)}
 .preview{max-width:100%; max-height:360px; border-radius:12px; border:1px solid var(--line); margin-top:10px; box-shadow:0 10px 26px rgba(0,0,0,.4)}
 .deco{display:flex; justify-content:space-around; align-items:center; gap:10px; margin:14px 0 0; padding:12px; border-top:1px dashed rgba(120,160,255,.18); font-family:'Cambria Math','Times New Roman',serif; color:rgba(160,190,255,.35); font-size:14px; flex-wrap:wrap;}
 
-/* ESTILOS DA GRADE DE HORÁRIOS */
-.grade-horario { display: grid; grid-template-columns: 80px repeat(6, 1fr); gap: 4px; margin-top: 10px; }
+/* GRADE DE HORÁRIOS */
+.grade-horario { display: grid; grid-template-columns: 80px repeat(6, 1fr); gap: 4px; margin-top: 10px; min-width: 700px;}
 .grade-header { background: #101a36; padding: 8px; text-align: center; font-weight: 700; font-size: 12px; border-radius: 6px; border: 1px solid var(--line); color: var(--accent);}
 .grade-hora { background: #0a1228; padding: 8px; text-align: center; font-size: 11px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center;}
-.grade-celula { background: rgba(76,201,240,.04); border: 1px dashed rgba(76,201,240,.2); border-radius: 6px; padding: 6px; min-height: 50px; position: relative; cursor: pointer; transition: .2s; font-size: 11px; display: flex; flex-direction: column; justify-content: center;}
+.grade-celula { background: rgba(76,201,240,.04); border: 1px dashed rgba(76,201,240,.2); border-radius: 6px; padding: 6px; min-height: 60px; position: relative; cursor: pointer; transition: .2s; font-size: 11px; display: flex; flex-direction: column; justify-content: flex-start; gap: 4px;}
 .grade-celula:hover { background: rgba(76,201,240,.1); border-color: var(--accent); }
-.grade-celula .disc-nome { font-weight: bold; color: var(--txt); margin-bottom: 2px;}
-.grade-celula .disc-hora { color: var(--muted); font-size: 10px;}
-.grade-celula .btn-del { position: absolute; top: 2px; right: 2px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; line-height: 14px; cursor: pointer; display: none; padding: 0;}
+.grade-celula .disc-nome { font-weight: bold; color: var(--txt); margin-bottom: 2px; font-size: 11px; line-height:1.15;}
+.grade-celula .disc-hora { color: var(--accent); font-size: 10px; font-weight:600;}
+.grade-celula .disc-local { color: var(--gold); font-size: 9px; font-weight: 600; margin-top: 1px; line-height:1.15;}
+.grade-celula .aula-bloco { position:relative; background: rgba(31,111,235,.12); border-radius:4px; padding:3px 4px; margin-bottom:2px; border-left:2px solid var(--accent);}
+.grade-celula .btn-del { position: absolute; top: -4px; right: -4px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; line-height: 14px; cursor: pointer; display: none; padding: 0; z-index:2;}
 .grade-celula:hover .btn-del { display: block; }
 
 @media(max-width:600px){
@@ -151,10 +151,13 @@ a{color:var(--accent)}
   .ring{width:100px;height:100px} .ring span{font-size:17px}
   .atomo{width:36px;height:36px}
   .chart .col .rot {display:none;}
-  .grade-horario { grid-template-columns: 50px repeat(6, 1fr); gap: 2px;}
-  .grade-header { font-size: 10px; padding: 4px 2px;}
-  .grade-hora { font-size: 9px; padding: 4px 2px;}
-  .grade-celula { font-size: 9px; padding: 4px 2px; min-height: 40px;}
+  .grade-horario { grid-template-columns: 45px repeat(6, 1fr); gap: 2px; min-width: 0;}
+  .grade-header { font-size: 9px; padding: 4px 2px;}
+  .grade-hora { font-size: 8px; padding: 4px 2px;}
+  .grade-celula { font-size: 8px; padding: 3px 2px; min-height: 46px;}
+  .grade-celula .disc-nome { font-size:8px;}
+  .grade-celula .disc-hora { font-size:8px;}
+  .grade-celula .disc-local { font-size:7px;}
 }
 </style>
 </head>
@@ -175,7 +178,7 @@ a{color:var(--accent)}
 <div class="orbita o1"></div>
 <div class="orbita o2"></div>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
 <div id="authView" class="auth">
   <div class="card ornament">
     <div class="section-title">
@@ -200,7 +203,6 @@ a{color:var(--accent)}
       </div>
       <div id="authMsg" class="small" style="margin-top:10px;color:var(--danger); text-align:center; font-weight:bold;"></div>
     </div>
-    
     <div id="firstBox" class="hidden">
       <div class="alert">Crie sua conta. Após criar, você será direcionado para a importação dos seus dados.</div>
       <label class="label">E-mail</label>
@@ -215,12 +217,11 @@ a{color:var(--accent)}
       </div>
       <div id="regMsg" class="small" style="margin-top:10px;color:var(--danger); text-align:center; font-weight:bold;"></div>
     </div>
-    
     <div class="deco"><span>∑</span><span>∫</span><span>π</span><span>φ</span><span>λ</span><span>Δ</span><span>ℏ</span><span>∇</span><span>∞</span></div>
   </div>
 </div>
 
-<!-- ================= ONBOARDING (MINIMALISTA E PRECISO) ================= -->
+<!-- ONBOARDING -->
 <div id="onboardingView" class="auth hidden" style="max-width: 800px;">
   <div class="card ornament">
     <div class="section-title">
@@ -230,16 +231,11 @@ a{color:var(--accent)}
         <div class="small">Leitura precisa do seu Histórico</div>
       </div>
     </div>
-    
     <p class="small">Para liberar o acesso, carregue o seu Histórico Escolar (PDF). O sistema extrairá o texto de forma nativa (100% preciso) e mostrará a tabela abaixo para você conferir.</p>
-    
     <div class="row" style="margin-top:15px">
       <input id="inpObFile" type="file" accept=".pdf,image/*" style="flex:1">
     </div>
-    
     <div id="obStatus" class="alert ok hidden" style="margin-top:10px;">Aguardando arquivo...</div>
-    
-    <!-- Tabela de revisão -->
     <div id="obReviewBox" class="hidden" style="margin-top:15px;">
       <div class="table-responsive" style="max-height: 300px;">
         <table id="obTable">
@@ -249,12 +245,11 @@ a{color:var(--accent)}
       </div>
       <button id="btnConfirmarImport" class="ok" style="width:100%; margin-top:15px;">Confirmar e Acessar Painel</button>
     </div>
-    
     <div id="obMsg" class="small" style="margin-top:10px;color:var(--danger); text-align:center; font-weight:bold;"></div>
   </div>
 </div>
 
-<!-- ================= APP ================= -->
+<!-- APP -->
 <div id="app" class="hidden">
   <div class="flex-between">
     <div class="section-title">
@@ -272,7 +267,6 @@ a{color:var(--accent)}
       <button id="btnLogout" class="danger" style="padding:8px 12px; font-size:12px;">Sair</button>
     </div>
   </div>
-
   <div class="tabs" id="tabs"></div>
   <div id="views"></div>
 </div>
@@ -355,12 +349,12 @@ let state = {
   conteudos: [],
   atividades: [],
   config: {},
-  onboardingConcluido: false 
+  onboardingConcluido: false
 };
 
 let currentUser = null;
 let unsubscribeSnapshot = null;
-let importacaoTemp = []; // Armazena os dados lidos antes de confirmar
+let importacaoTemp = [];
 
 function estadoInicialCaio(){
   const disc = {};
@@ -368,7 +362,7 @@ function estadoInicialCaio(){
   const setD = (cod, st, nota, sem, hist, rp) => { if(disc[cod]) disc[cod] = {status: st, nota: nota, semestre: sem, statusHist: hist, rp: rp}; };
   setD("ITA122", "concluida", 2.06, "2024/1", "Repro Nota", true); setD("ITA130", "concluida", 0.00, "2024/1", "Repro Nota", true); setD("ITM002", "concluida", 0.74, "2024/1", "Repro Nota", true); setD("ITM161", "concluida", 1.47, "2024/1", "Repro Nota", true); setD("ITS033", "concluida", 3.23, "2024/1", "Repro Freq", true);
   setD("ITA201", "concluida", 0.00, "2024/2", "Repro Nota", true); setD("ITA208", "concluida", 0.00, "2024/2", "Repro Nota", true); setD("ITM060", "concluida", 0.00, "2024/2", "Repro Freq", true);
-  setD("ITM002", "concluida", 7.22, "2024/2 (Férias)", "Aprovado", false); 
+  setD("ITM002", "concluida", 7.22, "2024/2 (Férias)", "Aprovado", false);
   setD("ITA122", "concluida", 6.00, "2025/1", "Aprovado", false); setD("ITA130", "concluida", 7.33, "2025/1", "Aprovado", false); setD("ITM021", "concluida", 9.25, "2025/1", "Aprovado", false); setD("ITM161", "concluida", 5.17, "2025/1", "Aprovado", false); setD("ITC020", "concluida", 9.32, "2025/1", "Aprovado", false);
   setD("ITA104", "concluida", 0.00, "2025/2", "Repro Freq", true); setD("ITM018", "concluida", 8.00, "2025/2", "Aprovado", false); setD("ITM802", "concluida", 6.44, "2025/2", "Aprovado", false); setD("ITQ101", "concluida", 1.00, "2025/2", "Repro Freq", true);
   setD("ITA131", "concluida", 7.25, "2025/2 (Férias)", "Aprovado", false);
@@ -376,7 +370,7 @@ function estadoInicialCaio(){
   setD("ITA104", "cursando", null, "2026/2", "Matrícula", false); setD("ITA128", "cursando", null, "2026/2", "Matrícula", false); setD("ITA208", "cursando", null, "2026/2", "Matrícula", false); setD("ITA209", "cursando", null, "2026/2", "Matrícula", false); setD("ITM022", "cursando", null, "2026/2", "Matrícula", false);
 
   disc._historicoTentativas = [
-    {cod:"ITA122", nota:2.06, sem:"2024/1", rp:true}, {cod:"ITA130", nota:0.00, sem:"2024/1", rp:true}, {cod:"ITM002", nota:0.74, sem:"2024/1", rp:true}, {cod:"ITM161", nota:1.47, sem:"2024/1", rp:true}, {cod:"ITS033", nota:3.23, sem:"2024/1", rp:true}, 
+    {cod:"ITA122", nota:2.06, sem:"2024/1", rp:true}, {cod:"ITA130", nota:0.00, sem:"2024/1", rp:true}, {cod:"ITM002", nota:0.74, sem:"2024/1", rp:true}, {cod:"ITM161", nota:1.47, sem:"2024/1", rp:true}, {cod:"ITS033", nota:3.23, sem:"2024/1", rp:true},
     {cod:"ITA201", nota:0.00, sem:"2024/2", rp:true}, {cod:"ITA208", nota:0.00, sem:"2024/2", rp:true}, {cod:"ITM060", nota:0.00, sem:"2024/2", rp:true},
     {cod:"ITM002", nota:7.22, sem:"2024/2 (Férias)", rp:false},
     {cod:"ITA122", nota:6.00, sem:"2025/1", rp:false}, {cod:"ITA130", nota:7.33, sem:"2025/1", rp:false}, {cod:"ITM021", nota:9.25, sem:"2025/1", rp:false}, {cod:"ITM161", nota:5.17, sem:"2025/1", rp:false}, {cod:"ITC020", nota:9.32, sem:"2025/1", rp:false},
@@ -401,7 +395,6 @@ function saveState() {
 
 function iniciarSincronizacao() {
   if (unsubscribeSnapshot) unsubscribeSnapshot();
-  
   unsubscribeSnapshot = db.collection("users").doc(currentUser.uid).onSnapshot((doc) => {
     if (doc.exists) {
       const data = doc.data();
@@ -421,7 +414,6 @@ function iniciarSincronizacao() {
       state.conteudos = CONTEUDOS_INICIAIS.slice();
       saveState();
     }
-    
     if (currentUser.email !== "galvacaio18@gmail.com" && !state.onboardingConcluido) {
       $("#app").classList.add("hidden");
       $("#onboardingView").classList.remove("hidden");
@@ -473,9 +465,7 @@ $("#btnLogin").onclick = () => {
     $("#authMsg").textContent = "Erro: " + msg;
   });
 };
-
 $("#btnCreate").onclick = () => { $("#loginBox").classList.add("hidden"); $("#firstBox").classList.remove("hidden"); };
-
 $("#btnSaveUser").onclick = () => {
   const email = $("#newEmail").value.trim(); const pass = $("#newPass").value; const pass2 = $("#newPass2").value;
   if (pass !== pass2) return $("#regMsg").textContent = "As senhas não conferem.";
@@ -488,20 +478,121 @@ $("#btnSaveUser").onclick = () => {
     $("#regMsg").textContent = "Erro: " + msg;
   });
 };
-
 $("#btnBackLogin").onclick = () => { $("#loginBox").classList.remove("hidden"); $("#firstBox").classList.add("hidden"); };
-
 $("#btnForgot").onclick = (e) => {
   e.preventDefault(); const email = prompt("Digite seu e-mail para receber o link de redefinição:");
   if (!email) return;
   auth.sendPasswordResetEmail(email).then(() => toast("E-mail enviado.", "ok")).catch((error) => toast("Erro: " + error.message, "danger"));
 };
-
 $("#btnLogout").onclick = () => { if (unsubscribeSnapshot) unsubscribeSnapshot(); auth.signOut().then(() => { location.reload(); }); };
 
-/* =========================================================
-   ONBOARDING (LEITURA PRECISA DE PDF E REVISÃO VISUAL)
-   ========================================================= */
+/* =========================================================================
+   MOTOR DE EXTRAÇÃO DE PDF/OCR — usado no onboarding e na aba de importação
+   ========================================================================= */
+async function extrairTextoArquivo(f){
+  if (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
+    const arrayBuffer = await f.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let texto = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const items = content.items;
+      // Reconstrói linhas agrupando por Y (com tolerância), ordena por X
+      const linesMap = {};
+      items.forEach(item => {
+        if (!item.str || !item.str.trim()) return;
+        const y = Math.round(item.transform[5] / 3) * 3;
+        if (!linesMap[y]) linesMap[y] = [];
+        linesMap[y].push({ x: item.transform[4], str: item.str });
+      });
+      const ys = Object.keys(linesMap).map(Number).sort((a, b) => b - a);
+      ys.forEach(y => {
+        const arr = linesMap[y].sort((a, b) => a.x - b.x);
+        texto += arr.map(i => i.str).join(" ") + "\n";
+      });
+    }
+    return texto;
+  } else {
+    // Imagem → OCR
+    const { data } = await Tesseract.recognize(f, "por");
+    return data.text || "";
+  }
+}
+
+function extrairDisciplinasDoTexto(texto){
+  const todas = OBRIGATORIAS.concat(OPTATIVAS);
+  const codMap = {};
+  todas.forEach(d => codMap[d.cod] = d);
+
+  const resultados = [];
+  const vistos = new Set();
+
+  const linhas = texto.split(/\n/).map(l => l.replace(/\s+/g, " ").trim());
+  let periodoAtual = null;
+
+  for (const linha of linhas) {
+    if (!linha) continue;
+
+    // Detecta cabeçalho de período
+    const semHeader = linha.match(/per[íi]odo\s*(?:letivo)?\s*[:\-]?\s*(20\d{2})\s*[\/\-]\s*([12])/i);
+    if (semHeader) {
+      periodoAtual = `${semHeader[1]}/${semHeader[2]}`;
+      continue;
+    }
+
+    const codMatch = linha.match(/\b([A-Z]{3}\d{3})\b/);
+    if (!codMatch) continue;
+
+    const cod = codMatch[1];
+    const def = codMap[cod];
+    if (!def) continue;
+
+    // Semestre: da própria linha ou do último cabeçalho
+    const lineSem = linha.match(/\b(20\d{2})\s*[\/\-]\s*([12])\b/);
+    const semestre = lineSem ? `${lineSem[1]}/${lineSem[2]}` : periodoAtual;
+
+    // Status
+    const upper = linha.toUpperCase();
+    let statusHist = "";
+    let rp = false;
+    if (/REPRO.*NOTA|REPROV.*NOTA/.test(upper)) { statusHist = "Repro Nota"; rp = true; }
+    else if (/REPRO.*FREQ|REPROV.*FREQ|REPRO.*FALT/.test(upper)) { statusHist = "Repro Freq"; rp = true; }
+    else if (/APROV/.test(upper)) { statusHist = "Aprovado"; }
+    else if (/MATRICUL|CURSANDO|EM CURSO|TRANCAD/i.test(upper)) { statusHist = "Matrícula"; }
+
+    // Nota — prioriza decimais 0–10
+    let nota = null;
+    const decs = [...linha.matchAll(/\b(\d{1,2}[.,]\d{1,2})\b/g)].map(m => parseFloat(m[1].replace(",", ".")));
+    for (const n of decs) { if (n >= 0 && n <= 10) { nota = n; break; } }
+    if (nota === null) {
+      const ints = [...linha.matchAll(/\b(\d{1,2})\b/g)].map(m => parseInt(m[1]));
+      const excluir = [30,45,60,90,105,120,24,48,72,200];
+      for (const n of ints) {
+        if (n >= 0 && n <= 10 && !excluir.includes(n)) { nota = n; break; }
+      }
+    }
+    if (statusHist === "Repro Freq") nota = 0;
+
+    // Status final
+    let status = "pendente";
+    if (statusHist === "Aprovado" || rp) status = "concluida";
+    else if (statusHist === "Matrícula") status = "cursando";
+    else if (nota !== null) status = "concluida";
+
+    const key = `${cod}_${semestre || ""}_${statusHist}_${nota}`;
+    if (vistos.has(key)) continue;
+    vistos.add(key);
+
+    resultados.push({ cod, nome: def.nome, nota, status, semestre, rp, statusHist });
+  }
+
+  return resultados;
+}
+
+/* =========================================================================
+   ONBOARDING
+   ========================================================================= */
 function renderOnboarding() {
   const fileInput = $("#inpObFile");
   const statusBox = $("#obStatus");
@@ -510,78 +601,40 @@ function renderOnboarding() {
 
   fileInput.onchange = async (e) => {
     const f = e.target.files[0]; if(!f) return;
-    
     statusBox.classList.remove("hidden");
-    statusBox.textContent = "Lendo arquivo e extraindo informações precisas...";
+    statusBox.className = "alert";
+    statusBox.textContent = "Lendo arquivo e extraindo informações...";
     reviewBox.classList.add("hidden");
-    importacaoTemp = []; // Limpa tentativas anteriores
+    importacaoTemp = [];
 
     try {
-      let texto = "";
+      const texto = await extrairTextoArquivo(f);
+      const extraidos = extrairDisciplinasDoTexto(texto);
 
-      if(f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
-        // Leitura nativa de PDF (MUITO MAIS PRECISA QUE OCR)
-        const arrayBuffer = await f.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          texto += textContent.items.map(item => item.str).join(" ") + "\n";
-        }
-      } else {
-        // Se for imagem, usa OCR (menos preciso, mas necessário)
-        const { data } = await Tesseract.recognize(f, "por");
-        texto = data.text || "";
+      if (extraidos.length === 0) {
+        statusBox.className = "alert danger";
+        statusBox.textContent = "Não foi possível extrair disciplinas. Verifique o arquivo ou preencha manualmente.";
+        return;
       }
 
-      // Sistema de extração via Regex
-      const linhas = texto.split("\n");
-      const todasDisciplinas = OBRIGATORIAS.concat(OPTATIVAS);
-      
-      // Limpa e formata a tabela para o usuário revisar
+      importacaoTemp = extraidos;
       tableBody.innerHTML = "";
-      
-      linhas.forEach(l => {
-        const matchCod = l.match(/\b[A-Z]{3}\d{3}\b/);
-        if(!matchCod) return;
-        
-        const cod = matchCod[0];
-        const discDef = todasDisciplinas.find(d => d.cod === cod);
-        if(!discDef) return; // Ignora se não for do curso
-
-        // Tenta achar uma nota (ex: 8.5, 0.00, 7,22)
-        const nums = l.match(/\b\d{1,2}([.,]\d{1,2})?\b/g) || [];
-        let nota = null;
-        for(const n of nums){
-          const v = parseFloat(n.replace(",", "."));
-          if(v >= 0 && v <= 10){ nota = v; break; }
-        }
-
-        // Verifica status (Repro ou Aprovado)
-        const isRepro = l.toLowerCase().includes("repro");
-        const status = isRepro ? "Reprovado" : (nota != null ? "Concluída" : "Cursando");
-
-        importacaoTemp.push({ cod, nome: discDef.nome, nota, status });
-
-        // Adiciona na tabela visual
+      extraidos.forEach((it, idx) => {
         const tr = document.createElement("tr");
+        const cls = it.rp ? 'danger' : (it.status === 'cursando' ? 'cur' : 'ok');
+        const label = it.rp ? 'Reprovado' : (it.status === 'cursando' ? 'Cursando' : 'Aprovado');
         tr.innerHTML = `
-          <td><b>${cod}</b></td>
-          <td>${discDef.nome}</td>
-          <td><input type="number" step="0.01" min="0" max="10" value="${nota??""}" data-edit-nota="${cod}" style="width:70px; padding:4px; text-align:center;"></td>
-          <td><span class="pill ${isRepro?'danger':'ok'}">${status}</span></td>
+          <td><b>${it.cod}</b></td>
+          <td>${it.nome}</td>
+          <td><input type="number" step="0.01" min="0" max="10" value="${it.nota??""}" data-ob-idx="${idx}" style="width:70px; padding:4px; text-align:center;"></td>
+          <td><span class="pill ${cls}">${label}</span><br><span class="small">${it.semestre || ""}</span></td>
         `;
         tableBody.appendChild(tr);
       });
 
-      if(importacaoTemp.length > 0) {
-        statusBox.className = "alert ok";
-        statusBox.textContent = `Foram encontradas ${importacaoTemp.length} disciplinas. Revise abaixo e confirme.`;
-        reviewBox.classList.remove("hidden");
-      } else {
-        statusBox.className = "alert danger";
-        statusBox.textContent = "Não foi possível extrair disciplinas. Verifique o arquivo.";
-      }
+      statusBox.className = "alert ok";
+      statusBox.textContent = `Foram encontradas ${extraidos.length} disciplinas. Revise abaixo e confirme.`;
+      reviewBox.classList.remove("hidden");
 
     } catch (error) {
       statusBox.className = "alert danger";
@@ -589,30 +642,34 @@ function renderOnboarding() {
     }
   };
 
-  // Ao clicar em confirmar, salva os dados revisados
   $("#btnConfirmarImport").onclick = () => {
     try {
-      // Pega as notas que o usuário possa ter corrigido na tabela
-      $$("[data-edit-nota]").forEach(inp => {
-        const cod = inp.dataset.editNota;
-        const val = inp.value === "" ? null : Number(inp.value);
-        const item = importacaoTemp.find(x => x.cod === cod);
-        if(item) item.nota = val;
+      $$("[data-ob-idx]").forEach(inp => {
+        const idx = parseInt(inp.dataset.obIdx);
+        const v = inp.value === "" ? null : Number(inp.value);
+        if (!isNaN(v) || inp.value === "") importacaoTemp[idx].nota = v;
       });
 
-      // Aplica no sistema
       importacaoTemp.forEach(it => {
-        state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, {
+        state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod] || {}, {
           nota: it.nota,
-          status: it.status === "Reprovado" ? "concluida" : (it.nota != null ? "concluida" : "cursando"),
-          rp: it.status === "Reprovado",
-          statusHist: it.status === "Reprovado" ? "Repro Nota" : ""
+          status: it.status,
+          rp: it.rp,
+          statusHist: it.statusHist,
+          semestre: it.semestre
         });
+      });
+
+      // Histórico de tentativas
+      if (!state.disciplinas._historicoTentativas) state.disciplinas._historicoTentativas = [];
+      importacaoTemp.forEach(it => {
+        const existing = state.disciplinas._historicoTentativas.find(t => t.cod === it.cod && t.sem === (it.semestre || "Atual"));
+        if (existing) { existing.nota = it.nota; existing.rp = it.rp; }
+        else state.disciplinas._historicoTentativas.push({ cod: it.cod, nota: it.nota, sem: it.semestre || "Atual", rp: it.rp });
       });
 
       state.onboardingConcluido = true;
       saveState();
-      
       toast("Dados importados com sucesso!");
       $("#onboardingView").classList.add("hidden");
       $("#app").classList.remove("hidden");
@@ -623,12 +680,16 @@ function renderOnboarding() {
   };
 }
 
+/* =========================================================================
+   HELPERS
+   ========================================================================= */
 const fmt = n => (Math.round(n*100)/100).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
 function hojeISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
 function toDate(iso){ return new Date(iso+"T00:00:00"); }
 function diffDias(iso){ const h = new Date(); h.setHours(0,0,0,0); const d = toDate(iso); return Math.round((d-h)/86400000); }
 function toast(msg, tipo="ok"){ const t=$("#toast"); t.textContent=msg; t.classList.remove("hidden"); t.style.borderColor = tipo==="danger" ? "var(--danger)" : "var(--accent)"; clearTimeout(t._t); t._t=setTimeout(()=>t.classList.add("hidden"), 3500); }
 function registrarAtividade(txt){ state.atividades.unshift({txt, quando:new Date().toISOString()}); if(state.atividades.length>300) state.atividades.length=300; saveState(); }
+function toMin(hhmm){ if(!hhmm) return 0; const [h,m] = hhmm.split(":").map(Number); return h*60 + (m||0); }
 
 function progresso(){
   let chConcObrig = 0, chConcOpt = 0, qtdConc = 0;
@@ -647,7 +708,7 @@ function calcStats(){
   todas.forEach(d => {
     const reg = state.disciplinas[d.cod];
     if(!reg) { faltam++; return; }
-    if (reg.status === "concluida") { if (reg.rp) { reprovadas++; } else { aprovadas++; } } 
+    if (reg.status === "concluida") { if (reg.rp) { reprovadas++; } else { aprovadas++; } }
     else if (reg.status === "cursando") { cursando++; } else { faltam++; }
   });
   return { aprovadas, reprovadas, cursando, faltam };
@@ -679,11 +740,11 @@ function calcularCR(){
 
   OBRIGATORIAS.concat(OPTATIVAS).forEach(d => {
     const reg = state.disciplinas[d.cod]; if(!reg) return;
-    if(!mapaTentativas[d.cod] && reg.nota != null) { mapaTentativas[d.cod] = [{ cod: d.cod, nota: reg.nota, sem: reg.semestre || "Atual", rp: reg.rp }]; } 
+    if(!mapaTentativas[d.cod] && reg.nota != null) { mapaTentativas[d.cod] = [{ cod: d.cod, nota: reg.nota, sem: reg.semestre || "Atual", rp: reg.rp }]; }
     else if (mapaTentativas[d.cod] && mapaTentativas[d.cod].length > 0) {
       const lastTent = mapaTentativas[d.cod][mapaTentativas[d.cod].length - 1];
       if(reg.nota != null && (lastTent.nota !== reg.nota || lastTent.rp !== reg.rp)) {
-         mapaTentativas[d.cod][mapaTentativas[d.cod].length - 1] = { cod: d.cod, nota: reg.rp ? (reg.statusHist==="Repro Freq" ? reg.nota : reg.nota) : reg.nota, sem: reg.semestre || "Atual", rp: reg.rp };
+         mapaTentativas[d.cod][mapaTentativas[d.cod].length - 1] = { cod: d.cod, nota: reg.nota, sem: reg.semestre || "Atual", rp: reg.rp };
       }
     }
   });
@@ -714,12 +775,12 @@ function choqueHorario(codA, codB){
   for(const a of ha){ for(const b of hb){ if(a.dia===b.dia){ const iniA = toMin(a.ini), fimA = toMin(a.fim); const iniB = toMin(b.ini), fimB = toMin(b.fim); if(iniA < fimB && iniB < fimA) return true; } } }
   return false;
 }
-function toMin(hhmm){ if(!hhmm) return 0; const [h,m] = hhmm.split(":").map(Number); return h*60 + (m||0); }
 
 const ABAS = [
   {id:"visao", ico:"📊", nome:"Visão geral"}, {id:"matriz", ico:"📚", nome:"Matriz do curso"}, {id:"semestre", ico:"📝", nome:"Meu semestre"}, {id:"horario", ico:"🕒", nome:"Quadro de Horário"}, {id:"cr", ico:"📈", nome:"CR e notas"}, {id:"prereq", ico:"🔗", nome:"Pré-requisitos"}, {id:"simulador", ico:"🧪", nome:"Simulador de matrícula"}, {id:"calendario", ico:"📅", nome:"Calendário 2026"}, {id:"prazos", ico:"⏰", nome:"Prazos e avisos"}, {id:"conteudos", ico:"🎓", nome:"Conteúdos"}, {id:"importar", ico:"📄", nome:"Importar PDF/Imagem"}, {id:"atividades", ico:"🕘", nome:"Histórico"}, {id:"config", ico:"⚙️", nome:"Configurações"}
 ];
 let abaAtiva = 0;
+
 function montarAbas(){
   const box = $("#tabs"); box.innerHTML="";
   ABAS.forEach((a,i)=>{
@@ -735,6 +796,9 @@ function renderView(i, scrollTop = true){
   if(scrollTop) window.scrollTo({top:0,behavior:"smooth"});
 }
 
+/* =========================================================================
+   VIEWS
+   ========================================================================= */
 function viewVisao(root){
   const p = progresso(); const est = estimativaFormatura(); const cr = calcularCR(); const stats = calcStats();
   const proximos = CALENDARIO.map(e=>({...e, dias:diffDias(e.data)})).filter(e=>e.dias>=0).sort((a,b)=>a.dias-b.dias).slice(0,5);
@@ -805,7 +869,7 @@ function viewMatriz(root){
 function viewSemestre(root){
   const sem = state.semestreAtual; const disp = OBRIGATORIAS.concat(OPTATIVAS);
   let html = `<div class="card ornament"><div class="section-title"><span class="ico">📝</span><h2>Meu semestre</h2></div><div class="row" style="margin-bottom:12px"><select id="selDisc" style="flex:1"><option value="">Selecione a disciplina…</option>${disp.map(d=>`<option value="${d.cod}">${d.cod} – ${d.nome}</option>`).join("")}</select><button id="btnAddDisc" style="width:auto">Adicionar</button></div><div class="table-responsive"><table><thead><tr><th>Disciplina</th><th>Avaliações (nota × peso)</th><th>Média</th><th></th></tr></thead><tbody>`;
-  if(!sem.disciplinas.length){ html += `<tr><td colspan="4" class="small">Nenhuma disciplina em andamento. Adicione uma acima.</td></tr>`; } 
+  if(!sem.disciplinas.length){ html += `<tr><td colspan="4" class="small">Nenhuma disciplina em andamento. Adicione uma acima.</td></tr>`; }
   else { sem.disciplinas.forEach(cod=>{ const d = disp.find(x=>x.cod===cod); if(!d) return; const avs = sem.avaliacoes[cod] || []; const media = mediaPonderada(avs); html += `<tr><td><b>${d.cod}</b><br><span class="small">${d.nome}</span></td><td><div class="small">${avs.map((a,i)=>`${a.nome}: ${a.nota} (p${a.peso}) <button class="ghost" data-delav="${cod}|${i}" style="padding:2px 8px; width:auto; font-size:10px;">×</button>`).join("<br>") || "—"}</div><div class="row" style="margin-top:8px; flex-wrap:nowrap; gap:4px;"><input placeholder="Av" class="inpAvNome" data-cod="${cod}" style="flex:1; padding:6px; font-size:12px;"><input placeholder="Nota" type="number" step="0.1" class="inpAvNota" data-cod="${cod}" style="width:55px; padding:6px; font-size:12px;"><input placeholder="Peso" type="number" step="1" value="1" class="inpAvPeso" data-cod="${cod}" style="width:50px; padding:6px; font-size:12px;"><button class="ghost" data-addav="${cod}" style="padding:6px 10px; width:auto;">+</button></div></td><td><b>${media===null?"—":fmt(media)}</b></td><td><button class="danger" data-remdisc="${cod}" style="padding:6px 10px; width:auto;">X</button></td></tr>`; }); }
   html += `</tbody></table></div></div>`; root.innerHTML = html;
 
@@ -815,23 +879,114 @@ function viewSemestre(root){
   $$("[data-delav]", root).forEach(b=>{ b.onclick = ()=>{ const [cod, idx] = b.dataset.delav.split("|"); sem.avaliacoes[cod].splice(parseInt(idx),1); saveState(); renderView(abaAtiva, false); }; });
 }
 
+/* =========================================================================
+   QUADRO DE HORÁRIO — vai até 22h, com Piso/Bloco/Sala, preenche várias linhas
+   ========================================================================= */
 function viewHorario(root){
-  const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]; const horarios = ["07:00", "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
+  const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  // Agora inclui 22:00. Última linha exibida = 22:00 (ocupa 22:00–23:00).
+  const horarios = ["07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"];
   if(!state.quadroHorario) state.quadroHorario = {};
-  let html = `<div class="card ornament"><div class="section-title"><span class="ico">🕒</span><h2>Quadro de Horário</h2></div><div class="row" style="margin-bottom:15px; background:rgba(76,201,240,.05); padding:15px; border-radius:10px;"><select id="qhDisc" style="flex:2"><option value="">Selecione a disciplina…</option>${OBRIGATORIAS.concat(OPTATIVAS).map(d=>`<option value="${d.nome}">${d.cod} – ${d.nome}</option>`).join("")}</select><select id="qhDia" style="flex:1">${dias.map(d=>`<option value="${d}">${d}</option>`).join("")}</select><input type="time" id="qhIni" style="flex:1" value="19:00"><input type="time" id="qhFim" style="flex:1" value="20:40"><button id="btnAddQH" style="width:auto">Adicionar</button></div><div class="table-responsive"><div class="grade-horario"><div class="grade-header" style="background:transparent; border:none;"></div>${dias.map(d => `<div class="grade-header">${d}</div>`).join("")}${horarios.map(h => `<div class="grade-hora">${h}</div>${dias.map(d => { const aulas = Object.values(state.quadroHorario).filter(a => a.dia === d && a.ini.startsWith(h)); return `<div class="grade-celula">${aulas.map(a => `<div style="position:relative; width:100%; height:100%;"><div class="disc-nome">${a.nome.substring(0, 15)}${a.nome.length>15?'...':''}</div><div class="disc-hora">${a.ini} - ${a.fim}</div><button class="btn-del" data-delqh="${a.id}">×</button></div>`).join("")}</div>`; }).join("")}`).join("")}</div></div></div>`;
+
+  // Sobreposição: a aula aparece em toda linha horária que intersecta o intervalo.
+  // Ex.: 14:00–16:00 → aparece em 14:00 e 15:00 (2 quadrados).
+  //      14:00–17:00 → aparece em 14:00, 15:00 e 16:00 (3 quadrados).
+  function aulaNoSlot(a, h){
+    const ini = toMin(a.ini), fim = toMin(a.fim);
+    const rs = toMin(h), re = rs + 60;
+    return ini < re && fim > rs;
+  }
+
+  let html = `
+    <div class="card ornament">
+      <div class="section-title"><span class="ico">🕒</span><h2>Quadro de Horário</h2></div>
+      <div class="small" style="margin-bottom:10px;color:var(--muted)">
+        Aulas de <b>várias horas</b> ocupam automaticamente várias linhas (ex.: 14:00–16:00 ocupa 14:00 e 15:00).
+        <br>Preencha Piso / Bloco / Sala para identificar o local.
+      </div>
+      <div class="row" style="margin-bottom:15px; background:rgba(76,201,240,.05); padding:15px; border-radius:10px; gap:8px;">
+        <select id="qhDisc" style="flex:2; min-width:150px"><option value="">Selecione a disciplina…</option>${OBRIGATORIAS.concat(OPTATIVAS).map(d=>`<option value="${d.cod}">${d.cod} – ${d.nome}</option>`).join("")}</select>
+        <select id="qhDia" style="flex:1; min-width:70px">${dias.map(d=>`<option value="${d}">${d}</option>`).join("")}</select>
+        <input type="time" id="qhIni" style="flex:1; min-width:90px" value="19:00">
+        <input type="time" id="qhFim" style="flex:1; min-width:90px" value="20:40">
+        <select id="qhPiso" style="flex:1; min-width:70px"><option value="">Piso</option><option value="1">Piso 1</option><option value="2">Piso 2</option><option value="3">Piso 3</option></select>
+        <select id="qhBloco" style="flex:1; min-width:70px"><option value="">Bloco</option><option value="A">Bloco A</option><option value="B">Bloco B</option><option value="C">Bloco C</option><option value="D">Bloco D</option></select>
+        <input type="text" id="qhSala" placeholder="Sala (ex.: 206A)" style="flex:1; min-width:100px">
+        <button id="btnAddQH" style="width:auto">Adicionar</button>
+      </div>
+      <div class="table-responsive">
+        <div class="grade-horario">
+          <div class="grade-header" style="background:transparent; border:none;"></div>
+          ${dias.map(d => `<div class="grade-header">${d}</div>`).join("")}
+          ${horarios.map(h => `
+            <div class="grade-hora">${h}</div>
+            ${dias.map(d => {
+              const aulas = Object.values(state.quadroHorario).filter(a => a.dia === d && aulaNoSlot(a, h));
+              return `<div class="grade-celula">${aulas.map(a => {
+                const local = [a.piso ? `Piso ${a.piso}` : "", a.bloco ? `Bloco ${a.bloco}` : "", a.sala ? `Sala ${a.sala}` : ""].filter(Boolean).join(" · ");
+                const nomeCurto = a.nome.length > 15 ? a.nome.substring(0,15) + "…" : a.nome;
+                return `<div class="aula-bloco">
+                  <button class="btn-del" data-delqh="${a.id}" title="Remover aula">×</button>
+                  <div class="disc-nome">${nomeCurto}</div>
+                  <div class="disc-hora">${a.ini} – ${a.fim}</div>
+                  ${local ? `<div class="disc-local">📍 ${local}</div>` : ""}
+                </div>`;
+              }).join("")}</div>`;
+            }).join("")}
+          `).join("")}
+        </div>
+      </div>
+    </div>`;
+
   root.innerHTML = html;
 
   $("#btnAddQH", root).onclick = () => {
-    const disc = $("#qhDisc", root).value; const dia = $("#qhDia", root).value; const ini = $("#qhIni", root).value; const fim = $("#qhFim", root).value;
-    if(!disc || !dia || !ini || !fim) return toast("Preencha todos os campos.", "danger"); if(ini >= fim) return toast("O horário de início deve ser menor que o de fim.", "danger");
-    const id = Date.now().toString(); state.quadroHorario[id] = { id, nome: disc, dia, ini, fim };
-    const codDisc = OBRIGATORIAS.concat(OPTATIVAS).find(d => d.nome === disc)?.cod;
-    if(codDisc) { if(!state.horarios[codDisc]) state.horarios[codDisc] = []; state.horarios[codDisc].push({dia: dia.toLowerCase(), ini, fim}); }
-    saveState(); registrarAtividade(`Aula adicionada: ${disc} (${dia} ${ini}-${fim})`); renderView(abaAtiva, false);
+    const cod = $("#qhDisc", root).value;
+    const dia = $("#qhDia", root).value;
+    const ini = $("#qhIni", root).value;
+    const fim = $("#qhFim", root).value;
+    const piso = $("#qhPiso", root).value;
+    const bloco = $("#qhBloco", root).value;
+    const sala = $("#qhSala", root).value.trim();
+
+    if (!cod || !dia || !ini || !fim) return toast("Preencha disciplina, dia e horários.", "danger");
+    if (toMin(ini) >= toMin(fim)) return toast("O horário de início deve ser menor que o de fim.", "danger");
+
+    const def = OBRIGATORIAS.concat(OPTATIVAS).find(d => d.cod === cod);
+    if (!def) return toast("Disciplina inválida.", "danger");
+
+    const id = Date.now().toString();
+    state.quadroHorario[id] = { id, cod, nome: def.nome, dia, ini, fim, piso, bloco, sala };
+
+    // Atualiza state.horarios para o simulador de conflito
+    if (!state.horarios[cod]) state.horarios[cod] = [];
+    state.horarios[cod].push({ dia: dia.toLowerCase(), ini, fim });
+
+    saveState();
+    registrarAtividade(`Aula adicionada: ${def.nome} (${dia} ${ini}–${fim})`);
+    renderView(abaAtiva, false);
   };
-  $$("[data-delqh]", root).forEach(b => { b.onclick = () => { delete state.quadroHorario[b.dataset.delqh]; saveState(); renderView(abaAtiva, false); }; });
+
+  $$("[data-delqh]", root).forEach(b => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const id = b.dataset.delqh;
+      const aula = state.quadroHorario[id];
+      if (aula) {
+        // Remove também do state.horarios
+        const h = state.horarios[aula.cod] || [];
+        state.horarios[aula.cod] = h.filter(x => !(x.dia === aula.dia.toLowerCase() && x.ini === aula.ini && x.fim === aula.fim));
+      }
+      delete state.quadroHorario[id];
+      saveState();
+      renderView(abaAtiva, false);
+    };
+  });
 }
 
+/* =========================================================================
+   CR
+   ========================================================================= */
 function viewCR(root){
   const cr = calcularCR(); const itens = cr.itens;
   let html = `<div class="card cr"><div class="section-title"><span class="ico">📈</span><h2>Coeficiente de Rendimento (CR)</h2></div><div class="grid cols-3"><div><div class="label">CR GERAL (UFAM)</div><div class="stat">${cr.cr?fmt(cr.cr):"—"}</div></div><div><div class="label">TENTATIVAS NO CÁLCULO</div><div class="stat">${itens.length}</div></div><div><div class="label">TOTAL DE CH NO CÁLCULO</div><div class="stat">${itens.reduce((s,i)=>s+i.ch,0)} h</div></div></div></div>`;
@@ -903,31 +1058,219 @@ function viewConteudos(root){
   renderLista();
 }
 
+/* =========================================================================
+   IMPORTAR — leitura automática de múltiplos PDFs + revisão + JSON
+   ========================================================================= */
 function viewImportar(root){
-  root.innerHTML = `<div class="card imp"><div class="section-title"><span class="ico">📄</span><h2>Importar PDF/Imagem</h2></div><div class="row" style="margin:12px 0"><input id="inpFile" type="file" accept=".pdf,image/*" style="flex:1"><button id="btnLimpar" class="ghost" style="width:auto">Limpar</button></div><div id="previewBox"></div><h3 style="margin-top:16px">JSON Validado para importar</h3><textarea id="jsonOut" style="width:100%;height:150px" placeholder='[{"cod":"ITA201","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea><button id="btnImportarJson" class="ok" style="width:100%; margin-top:10px;">Validar e Importar JSON</button></div>`;
-  const preview = $("#previewBox", root); const jsonOut = $("#jsonOut", root);
+  root.innerHTML = `
+    <div class="card imp">
+      <div class="section-title"><span class="ico">📄</span><h2>Importar PDF/Imagem</h2></div>
+      <div class="small" style="margin-bottom:10px;color:var(--muted)">
+        Envie <b>um ou mais arquivos</b> (PDF ou imagem). O sistema extrai as disciplinas automaticamente e preenche a tabela e o JSON abaixo para revisão.
+        Você pode corrigir valores antes de importar.
+      </div>
+      <div class="row" style="margin:12px 0">
+        <input id="inpFile" type="file" accept=".pdf,image/*" multiple style="flex:1">
+        <button id="btnProcessar" class="ok" style="width:auto">⚙️ Processar</button>
+        <button id="btnLimpar" class="ghost" style="width:auto">Limpar</button>
+      </div>
+      <div id="statusBox" class="alert hidden"></div>
+      <div id="previewBox" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;"></div>
+      <h3 style="margin-top:16px">Disciplinas extraídas (edite se necessário)</h3>
+      <div id="tabelaExtraida" class="table-responsive"></div>
+      <h3 style="margin-top:16px">JSON validado para importar</h3>
+      <textarea id="jsonOut" style="width:100%;height:170px;font-family:monospace;font-size:12px" placeholder='[{"cod":"ITA201","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea>
+      <button id="btnImportarJson" class="ok" style="width:100%; margin-top:10px;">✓ Validar e Importar JSON</button>
+    </div>`;
 
-  $("#inpFile", root).onchange = (e)=>{ const f = e.target.files[0]; if(!f) return; preview.innerHTML = ""; if(f.type.startsWith("image/")){ const img = document.createElement("img"); img.className = "preview"; img.src = URL.createObjectURL(f); preview.appendChild(img); } };
-  $("#btnLimpar", root).onclick = ()=>{ preview.innerHTML = ""; jsonOut.value = ""; $("#inpFile", root).value = ""; };
-  
-  $("#btnImportarJson", root).onclick = ()=>{
-    try{
+  const preview = $("#previewBox", root);
+  const jsonOut = $("#jsonOut", root);
+  const statusBox = $("#statusBox", root);
+  const tabela = $("#tabelaExtraida", root);
+  let arquivos = [];
+  let extraidos = [];
+
+  $("#inpFile", root).onchange = (e) => {
+    arquivos = Array.from(e.target.files || []);
+    preview.innerHTML = "";
+    arquivos.forEach(f => {
+      if (f.type.startsWith("image/")) {
+        const img = document.createElement("img");
+        img.className = "preview";
+        img.src = URL.createObjectURL(f);
+        preview.appendChild(img);
+      } else {
+        const div = document.createElement("div");
+        div.className = "chip";
+        div.textContent = "📄 " + f.name;
+        preview.appendChild(div);
+      }
+    });
+  };
+
+  $("#btnProcessar", root).onclick = async () => {
+    if (!arquivos.length) return toast("Selecione pelo menos um arquivo.", "danger");
+    statusBox.className = "alert";
+    statusBox.classList.remove("hidden");
+    statusBox.textContent = "Processando " + arquivos.length + " arquivo(s)...";
+    tabela.innerHTML = "";
+    jsonOut.value = "";
+    extraidos = [];
+    const vistos = new Set();
+
+    try {
+      for (let i = 0; i < arquivos.length; i++) {
+        const f = arquivos[i];
+        statusBox.textContent = `Processando ${i+1}/${arquivos.length}: ${f.name}…`;
+        // ceder para a UI atualizar
+        await new Promise(r => setTimeout(r, 30));
+        const texto = await extrairTextoArquivo(f);
+        const extraidosArq = extrairDisciplinasDoTexto(texto);
+        for (const item of extraidosArq) {
+          const key = `${item.cod}_${item.semestre||""}_${item.statusHist}_${item.nota}`;
+          if (!vistos.has(key)) {
+            vistos.add(key);
+            extraidos.push(item);
+          }
+        }
+      }
+
+      if (extraidos.length === 0) {
+        statusBox.className = "alert danger";
+        statusBox.textContent = "Nenhuma disciplina reconhecida. Verifique o arquivo, ou cole o JSON manualmente no campo abaixo.";
+        return;
+      }
+
+      extraidos.sort((a, b) => a.cod.localeCompare(b.cod));
+      renderTabelaExtraida();
+      atualizarJSON();
+
+      statusBox.className = "alert ok";
+      statusBox.textContent = `✓ ${extraidos.length} disciplina(s) extraída(s) de ${arquivos.length} arquivo(s). Revise abaixo e clique em "Validar e Importar".`;
+
+    } catch (err) {
+      statusBox.className = "alert danger";
+      statusBox.textContent = "Erro: " + err.message;
+    }
+  };
+
+  function atualizarJSON() {
+    jsonOut.value = JSON.stringify(extraidos.map(x => ({
+      cod: x.cod,
+      nota: x.nota,
+      status: x.status,
+      semestre: x.semestre,
+      rp: x.rp,
+      statusHist: x.statusHist
+    })), null, 2);
+  }
+
+  function renderTabelaExtraida() {
+    let html = `<table><thead><tr><th>Cód.</th><th>Disciplina</th><th>Semestre</th><th>Nota</th><th>Status</th><th>RP</th><th>Falta</th><th></th></tr></thead><tbody>`;
+    extraidos.forEach((e, i) => {
+      html += `<tr>
+        <td><b>${e.cod}</b></td>
+        <td>${e.nome}</td>
+        <td><input value="${e.semestre||''}" data-idx="${i}" data-field="semestre" style="width:90px;padding:4px;font-size:11px"></td>
+        <td><input type="number" step="0.01" min="0" max="10" value="${e.nota??''}" data-idx="${i}" data-field="nota" style="width:70px;padding:4px;font-size:11px"></td>
+        <td><select data-idx="${i}" data-field="status" style="width:100px;padding:4px;font-size:11px">
+          <option value="concluida" ${e.status==='concluida'?'selected':''}>Concluída</option>
+          <option value="cursando" ${e.status==='cursando'?'selected':''}>Cursando</option>
+          <option value="pendente" ${e.status==='pendente'?'selected':''}>Pendente</option>
+        </select></td>
+        <td style="text-align:center"><input type="checkbox" ${e.rp?'checked':''} data-idx="${i}" data-field="rp" style="width:18px;height:18px;accent-color:var(--danger)"></td>
+        <td style="text-align:center"><input type="checkbox" ${e.statusHist==='Repro Freq'?'checked':''} data-idx="${i}" data-field="falta" style="width:18px;height:18px;accent-color:var(--warn)"></td>
+        <td><button class="danger" data-del="${i}" style="padding:4px 8px;width:auto">×</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+    tabela.innerHTML = html;
+
+    tabela.querySelectorAll("[data-field]").forEach(inp => {
+      inp.onchange = () => {
+        const idx = parseInt(inp.dataset.idx);
+        const field = inp.dataset.field;
+        let v;
+        if (inp.type === "checkbox") v = inp.checked;
+        else if (inp.type === "number") v = inp.value === "" ? null : parseFloat(inp.value);
+        else v = inp.value;
+        if (field === "falta") {
+          extraidos[idx].statusHist = v ? "Repro Freq" : "";
+          extraidos[idx].rp = v ? true : extraidos[idx].rp;
+          if (v) { extraidos[idx].nota = 0; extraidos[idx].status = "concluida"; }
+          renderTabelaExtraida();
+        } else if (field === "rp") {
+          extraidos[idx].rp = v;
+          if (v && extraidos[idx].status !== "concluida") extraidos[idx].status = "concluida";
+          renderTabelaExtraida();
+        } else {
+          extraidos[idx][field] = v;
+        }
+        atualizarJSON();
+      };
+    });
+    tabela.querySelectorAll("[data-del]").forEach(b => {
+      b.onclick = () => {
+        extraidos.splice(parseInt(b.dataset.del), 1);
+        renderTabelaExtraida();
+        atualizarJSON();
+      };
+    });
+  }
+
+  $("#btnLimpar", root).onclick = () => {
+    preview.innerHTML = "";
+    jsonOut.value = "";
+    statusBox.classList.add("hidden");
+    tabela.innerHTML = "";
+    extraidos = [];
+    arquivos = [];
+    $("#inpFile", root).value = "";
+  };
+
+  $("#btnImportarJson", root).onclick = () => {
+    try {
       const rawJson = jsonOut.value.trim();
-      if(!rawJson) { toast("A caixa de texto está vazia.", "danger"); return; }
+      if (!rawJson) { toast("A caixa de texto está vazia. Clique em 'Processar' com um PDF ou cole um JSON.", "danger"); return; }
       const arr = JSON.parse(rawJson);
-      if(!Array.isArray(arr)) throw new Error("JSON deve ser uma lista.");
-      let erros = [];
-      const disciplinasValidas = OBRIGATORIAS.concat(OPTATIVAS);
+      if (!Array.isArray(arr)) throw new Error("JSON deve ser uma lista.");
+      const erros = [];
+      const todas = OBRIGATORIAS.concat(OPTATIVAS);
       arr.forEach((it, index) => {
-        if(!it.cod) { erros.push(`Item ${index+1}: Código ausente.`); return; }
-        const disc = disciplinasValidas.find(d => d.cod === it.cod);
-        if(!disc) { erros.push(`Item ${index+1}: Disciplina ${it.cod} não existe.`); return; }
-        if(it.nota != null) { const nota = Number(it.nota); if(isNaN(nota) || nota < 0 || nota > 10) { erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida.`); } }
+        if (!it.cod) { erros.push(`Item ${index+1}: Código ausente.`); return; }
+        const disc = todas.find(d => d.cod === it.cod);
+        if (!disc) { erros.push(`Item ${index+1}: Disciplina ${it.cod} não existe.`); return; }
+        if (it.nota != null) { const nota = Number(it.nota); if (isNaN(nota) || nota < 0 || nota > 10) erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida.`); }
       });
-      if(erros.length > 0) { toast("Erros encontrados.", "danger"); alert("Erros:\n\n" + erros.join("\n")); return; }
-      arr.forEach(it=>{ state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, { nota: it.nota!=null? Number(it.nota) : null, status: it.status || (it.nota!=null? "concluida":"pendente"), semestre: it.semestre || null, rp: it.rp || false }); });
-      saveState(); toast("Histórico importado!"); renderView(abaAtiva, false);
-    }catch(e){ toast("Erro: "+e.message,"danger"); }
+      if (erros.length > 0) { alert("Erros encontrados:\n\n" + erros.join("\n")); return; }
+
+      let count = 0;
+      arr.forEach(it => {
+        const cod = it.cod;
+        const nota = it.nota != null ? Number(it.nota) : null;
+        const status = it.status || (nota != null ? "concluida" : "pendente");
+        const rp = !!it.rp;
+        const statusHist = it.statusHist || (rp ? "Repro Nota" : "");
+        state.disciplinas[cod] = Object.assign(state.disciplinas[cod] || {}, {
+          nota, status, semestre: it.semestre || null, rp, statusHist
+        });
+
+        if (!state.disciplinas._historicoTentativas) state.disciplinas._historicoTentativas = [];
+        const existing = state.disciplinas._historicoTentativas.find(t =>
+          t.cod === cod && t.sem === (it.semestre || "Atual")
+        );
+        if (existing) { existing.nota = nota; existing.rp = rp; }
+        else state.disciplinas._historicoTentativas.push({ cod, nota, sem: it.semestre || "Atual", rp });
+        count++;
+      });
+
+      saveState();
+      registrarAtividade(`Importação de ${count} disciplinas via JSON`);
+      toast(`Histórico importado com sucesso! (${count} disciplinas)`);
+      renderView(abaAtiva, false);
+    } catch (e) {
+      toast("Erro: " + e.message, "danger");
+    }
   };
 }
 
