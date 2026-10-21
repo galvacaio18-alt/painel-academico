@@ -56,6 +56,7 @@ input,select,textarea,button{ font-family:inherit; font-size:14px; color:var(--t
 input:focus,select:focus,textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(76,201,240,.12)}
 button{ background:linear-gradient(135deg,#1f6feb,#4cc9f0); border:none; cursor:pointer; font-weight:700; letter-spacing:.2px; box-shadow:0 6px 18px rgba(31,111,235,.35); padding: 12px 16px; }
 button:active{transform:translateY(1px)}
+button:disabled{opacity:0.6; cursor:not-allowed;}
 button.ghost{background:transparent; border:1px solid var(--line); color:var(--muted); box-shadow:none}
 button.danger{background:linear-gradient(135deg,#c0392b,#e74c3c);}
 button.ok{background:linear-gradient(135deg,#1e8449,#2ecc71);}
@@ -219,34 +220,36 @@ a{color:var(--accent)}
   </div>
 </div>
 
-<!-- ================= ONBOARDING ================= -->
-<div id="onboardingView" class="auth hidden">
+<!-- ================= ONBOARDING (MINIMALISTA E PRECISO) ================= -->
+<div id="onboardingView" class="auth hidden" style="max-width: 800px;">
   <div class="card ornament">
     <div class="section-title">
       <span class="atomo"><span class="anel a1"></span><span class="anel a2"></span><span class="anel a3"></span><span class="nucleo"></span></span>
       <div>
         <h1>Primeiros Passos</h1>
-        <div class="small">Vamos configurar seu painel acadêmico</div>
+        <div class="small">Leitura precisa do seu Histórico</div>
       </div>
     </div>
     
-    <p class="small">Para liberar o acesso ao painel, carregue o seu Histórico Escolar ou Matriz do Curso (PDF ou Imagem). O sistema fará a leitura, validação matemática e preencherá suas abas.</p>
+    <p class="small">Para liberar o acesso, carregue o seu Histórico Escolar (PDF). O sistema extrairá o texto de forma nativa (100% preciso) e mostrará a tabela abaixo para você conferir.</p>
     
     <div class="row" style="margin-top:15px">
       <input id="inpObFile" type="file" accept=".pdf,image/*" style="flex:1">
     </div>
     
-    <div id="obPreviewBox" style="margin-top:10px"></div>
+    <div id="obStatus" class="alert ok hidden" style="margin-top:10px;">Aguardando arquivo...</div>
     
-    <button id="btnProcessar" class="ghost" style="width:100%; margin-top:10px;">Processar Documento com OCR</button>
-    
-    <div style="margin-top:15px;">
-      <label class="label">Resultado / JSON Validável</label>
-      <textarea id="obJsonOut" style="width:100%;height:120px; margin-top:5px;" placeholder='[{"cod":"ITA122","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea>
-      <div class="small" style="margin-top:5px;">O sistema verificará se os códigos existem e se as notas estão entre 0 e 10.</div>
+    <!-- Tabela de revisão -->
+    <div id="obReviewBox" class="hidden" style="margin-top:15px;">
+      <div class="table-responsive" style="max-height: 300px;">
+        <table id="obTable">
+          <thead><tr><th>Cód.</th><th>Disciplina</th><th>Nota</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="btnConfirmarImport" class="ok" style="width:100%; margin-top:15px;">Confirmar e Acessar Painel</button>
     </div>
     
-    <button id="btnValidarLiberar" class="ok" style="width:100%; margin-top:15px;">Validar Dados e Acessar Painel</button>
     <div id="obMsg" class="small" style="margin-top:10px;color:var(--danger); text-align:center; font-weight:bold;"></div>
   </div>
 </div>
@@ -285,7 +288,6 @@ if (window.location.protocol === 'file:') {
   document.getElementById('fileWarn').classList.remove('hidden');
 }
 
-// Inicializa o PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 const firebaseConfig = {
@@ -358,6 +360,7 @@ let state = {
 
 let currentUser = null;
 let unsubscribeSnapshot = null;
+let importacaoTemp = []; // Armazena os dados lidos antes de confirmar
 
 function estadoInicialCaio(){
   const disc = {};
@@ -497,132 +500,126 @@ $("#btnForgot").onclick = (e) => {
 $("#btnLogout").onclick = () => { if (unsubscribeSnapshot) unsubscribeSnapshot(); auth.signOut().then(() => { location.reload(); }); };
 
 /* =========================================================
-   ONBOARDING (COM SUPORTE A PDF AGORA)
+   ONBOARDING (LEITURA PRECISA DE PDF E REVISÃO VISUAL)
    ========================================================= */
 function renderOnboarding() {
-  const preview = $("#obPreviewBox"); const jsonOut = $("#obJsonOut"); const msg = $("#obMsg");
+  const fileInput = $("#inpObFile");
+  const statusBox = $("#obStatus");
+  const reviewBox = $("#obReviewBox");
+  const tableBody = $("#obTable tbody");
 
-  $("#inpObFile").onchange = (e) => {
+  fileInput.onchange = async (e) => {
     const f = e.target.files[0]; if(!f) return;
-    preview.innerHTML = "";
-    if(f.type.startsWith("image/")){
-      const img = document.createElement("img"); img.style.maxWidth = "100%"; img.style.borderRadius="10px"; img.style.marginTop="10px";
-      img.src = URL.createObjectURL(f); preview.appendChild(img);
-    } else {
-      preview.innerHTML = `<div class="small">Arquivo PDF carregado: ${f.name}. Clique em Processar.</div>`;
-    }
-  };
-
-  $("#btnProcessar").onclick = async () => {
-    const f = $("#inpObFile").files[0];
-    if(!f) return toast("Selecione um arquivo primeiro.", "danger");
     
-    msg.textContent = "Processando OCR... Aguarde.";
+    statusBox.classList.remove("hidden");
+    statusBox.textContent = "Lendo arquivo e extraindo informações precisas...";
+    reviewBox.classList.add("hidden");
+    importacaoTemp = []; // Limpa tentativas anteriores
 
     try {
       let texto = "";
 
-      // SE FOR PDF, CONVERTE PARA IMAGEM USANDO PDF.JS
       if(f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
+        // Leitura nativa de PDF (MUITO MAIS PRECISA QUE OCR)
         const arrayBuffer = await f.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-        const page = await pdf.getPage(1); // Lê a primeira página
-        
-        const viewport = page.getViewport({scale: 2.0}); // Aumenta a resolução para o OCR ler melhor
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        
-        await page.render({canvasContext: context, viewport: viewport}).promise;
-        
-        // Passa o canvas renderizado para o Tesseract
-        const { data } = await Tesseract.recognize(canvas, "por");
-        texto = data.text || "";
-      } 
-      // SE FOR IMAGEM DIRETA
-      else {
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          texto += textContent.items.map(item => item.str).join(" ") + "\n";
+        }
+      } else {
+        // Se for imagem, usa OCR (menos preciso, mas necessário)
         const { data } = await Tesseract.recognize(f, "por");
         texto = data.text || "";
       }
-      
-      msg.textContent = "OCR concluído. Revise o JSON gerado abaixo.";
-      
+
+      // Sistema de extração via Regex
       const linhas = texto.split("\n");
-      const out = [];
+      const todasDisciplinas = OBRIGATORIAS.concat(OPTATIVAS);
       
-      // O padrão das disciplinas da UFAM é 3 letras e 3 números (ex: ITA122, ITM161)
-      const regexCod = /[A-Z]{3}\d{3}/g;
+      // Limpa e formata a tabela para o usuário revisar
+      tableBody.innerHTML = "";
       
       linhas.forEach(l => {
-        const matchCod = l.match(regexCod);
+        const matchCod = l.match(/\b[A-Z]{3}\d{3}\b/);
         if(!matchCod) return;
         
         const cod = matchCod[0];
-        
-        // Tenta achar notas no formato 0.00 ou 8,5
+        const discDef = todasDisciplinas.find(d => d.cod === cod);
+        if(!discDef) return; // Ignora se não for do curso
+
+        // Tenta achar uma nota (ex: 8.5, 0.00, 7,22)
         const nums = l.match(/\b\d{1,2}([.,]\d{1,2})?\b/g) || [];
         let nota = null;
         for(const n of nums){
           const v = parseFloat(n.replace(",", "."));
           if(v >= 0 && v <= 10){ nota = v; break; }
         }
-        
-        out.push({ cod, nota, status: "concluida", semestre: "Extraído" });
+
+        // Verifica status (Repro ou Aprovado)
+        const isRepro = l.toLowerCase().includes("repro");
+        const status = isRepro ? "Reprovado" : (nota != null ? "Concluída" : "Cursando");
+
+        importacaoTemp.push({ cod, nome: discDef.nome, nota, status });
+
+        // Adiciona na tabela visual
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><b>${cod}</b></td>
+          <td>${discDef.nome}</td>
+          <td><input type="number" step="0.01" min="0" max="10" value="${nota??""}" data-edit-nota="${cod}" style="width:70px; padding:4px; text-align:center;"></td>
+          <td><span class="pill ${isRepro?'danger':'ok'}">${status}</span></td>
+        `;
+        tableBody.appendChild(tr);
       });
-      
-      if(out.length > 0) {
-        jsonOut.value = JSON.stringify(out, null, 2);
+
+      if(importacaoTemp.length > 0) {
+        statusBox.className = "alert ok";
+        statusBox.textContent = `Foram encontradas ${importacaoTemp.length} disciplinas. Revise abaixo e confirme.`;
+        reviewBox.classList.remove("hidden");
       } else {
-        jsonOut.value = "[]";
-        msg.textContent = "Não foi possível extrair os códigos automaticamente. Por favor, cole o JSON manualmente.";
+        statusBox.className = "alert danger";
+        statusBox.textContent = "Não foi possível extrair disciplinas. Verifique o arquivo.";
       }
-    } catch(e) {
-      msg.textContent = "Erro ao processar: " + e.message;
+
+    } catch (error) {
+      statusBox.className = "alert danger";
+      statusBox.textContent = "Erro ao ler o arquivo: " + error.message;
     }
   };
 
-  $("#btnValidarLiberar").onclick = () => {
+  // Ao clicar em confirmar, salva os dados revisados
+  $("#btnConfirmarImport").onclick = () => {
     try {
-      const rawJson = jsonOut.value.trim();
-      if(!rawJson) { msg.textContent = "A caixa está vazia. Cole um JSON válido ou digite [] para pular."; return; }
-
-      const arr = JSON.parse(rawJson);
-      if(!Array.isArray(arr)) throw new Error("O JSON deve ser uma lista.");
-      
-      let erros = [];
-      const disciplinasValidas = OBRIGATORIAS.concat(OPTATIVAS);
-
-      arr.forEach((it, index) => {
-        if(!it.cod) { erros.push(`Item ${index+1}: Código ausente.`); return; }
-        const disc = disciplinasValidas.find(d => d.cod === it.cod);
-        if(!disc) { erros.push(`Item ${index+1}: Disciplina ${it.cod} não existe na matriz.`); return; }
-        
-        if(it.nota != null) {
-          const nota = Number(it.nota);
-          if(isNaN(nota) || nota < 0 || nota > 10) { erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida (deve ser 0 a 10).`); }
-        }
+      // Pega as notas que o usuário possa ter corrigido na tabela
+      $$("[data-edit-nota]").forEach(inp => {
+        const cod = inp.dataset.editNota;
+        const val = inp.value === "" ? null : Number(inp.value);
+        const item = importacaoTemp.find(x => x.cod === cod);
+        if(item) item.nota = val;
       });
 
-      if(erros.length > 0) { msg.innerHTML = "Erros encontrados na validação:<br>" + erros.join("<br>"); return; }
-
-      arr.forEach(it => {
+      // Aplica no sistema
+      importacaoTemp.forEach(it => {
         state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, {
-          nota: it.nota!=null? Number(it.nota) : null,
-          status: it.status || (it.nota!=null? "concluida":"pendente"),
-          semestre: it.semestre || null,
-          rp: false
+          nota: it.nota,
+          status: it.status === "Reprovado" ? "concluida" : (it.nota != null ? "concluida" : "cursando"),
+          rp: it.status === "Reprovado",
+          statusHist: it.status === "Reprovado" ? "Repro Nota" : ""
         });
       });
 
       state.onboardingConcluido = true;
       saveState();
       
-      toast("Dados validados e importados com sucesso!");
+      toast("Dados importados com sucesso!");
       $("#onboardingView").classList.add("hidden");
       $("#app").classList.remove("hidden");
       montarAbas(); renderView(0);
-    } catch(e) { msg.textContent = "Erro na leitura do JSON: " + e.message; }
+    } catch (error) {
+      toast("Erro ao salvar: " + error.message, "danger");
+    }
   };
 }
 
