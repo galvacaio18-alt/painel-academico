@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Painel Acadêmico – Caio Pereira Galvão · MF/UFAM</title>
+<title>Painel Acadêmico – MF/UFAM</title>
 <!-- SDKs do Firebase para Autenticação e Banco de Dados em Tempo Real -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -96,7 +96,7 @@ tbody tr:hover td{background:rgba(76,201,240,.07)}
 .small{font-size:12px; color:var(--muted)}
 .flex-between{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}
 
-.auth{max-width:440px; margin:8vh auto; position:relative; z-index:1; padding:0 15px;}
+.auth{max-width:500px; margin:5vh auto; position:relative; z-index:1; padding:0 15px;}
 .auth .card{padding:28px}
 .alert{border-left:4px solid var(--warn); padding:12px; background:rgba(241,196,15,.07); border-radius:10px; margin:10px 0; font-size:13px;}
 .alert.danger{border-color:var(--danger); background:rgba(231,76,60,.08)}
@@ -139,6 +139,17 @@ a{color:var(--accent)}
 .preview{max-width:100%; max-height:360px; border-radius:12px; border:1px solid var(--line); margin-top:10px; box-shadow:0 10px 26px rgba(0,0,0,.4)}
 .deco{display:flex; justify-content:space-around; align-items:center; gap:10px; margin:14px 0 0; padding:12px; border-top:1px dashed rgba(120,160,255,.18); font-family:'Cambria Math','Times New Roman',serif; color:rgba(160,190,255,.35); font-size:14px; flex-wrap:wrap;}
 
+/* ESTILOS DA GRADE DE HORÁRIOS */
+.grade-horario { display: grid; grid-template-columns: 80px repeat(6, 1fr); gap: 4px; margin-top: 10px; }
+.grade-header { background: #101a36; padding: 8px; text-align: center; font-weight: 700; font-size: 12px; border-radius: 6px; border: 1px solid var(--line); color: var(--accent);}
+.grade-hora { background: #0a1228; padding: 8px; text-align: center; font-size: 11px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center;}
+.grade-celula { background: rgba(76,201,240,.04); border: 1px dashed rgba(76,201,240,.2); border-radius: 6px; padding: 6px; min-height: 50px; position: relative; cursor: pointer; transition: .2s; font-size: 11px; display: flex; flex-direction: column; justify-content: center;}
+.grade-celula:hover { background: rgba(76,201,240,.1); border-color: var(--accent); }
+.grade-celula .disc-nome { font-weight: bold; color: var(--txt); margin-bottom: 2px;}
+.grade-celula .disc-hora { color: var(--muted); font-size: 10px;}
+.grade-celula .btn-del { position: absolute; top: 2px; right: 2px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; line-height: 14px; cursor: pointer; display: none; padding: 0;}
+.grade-celula:hover .btn-del { display: block; }
+
 @media(max-width:600px){
   #app{padding:10px 10px 40px}
   h1{font-size:18px}
@@ -151,6 +162,10 @@ a{color:var(--accent)}
   .ring{width:100px;height:100px} .ring span{font-size:17px}
   .atomo{width:36px;height:36px}
   .chart .col .rot {display:none;}
+  .grade-horario { grid-template-columns: 50px repeat(6, 1fr); gap: 2px;}
+  .grade-header { font-size: 10px; padding: 4px 2px;}
+  .grade-hora { font-size: 9px; padding: 4px 2px;}
+  .grade-celula { font-size: 9px; padding: 4px 2px; min-height: 40px;}
 }
 </style>
 </head>
@@ -179,12 +194,12 @@ a{color:var(--accent)}
       <span class="atomo"><span class="anel a1"></span><span class="anel a2"></span><span class="anel a3"></span><span class="nucleo"></span></span>
       <div>
         <h1>Painel Acadêmico</h1>
-        <div class="small">Caio Pereira Galvão · IT04/2007-2 · UFAM</div>
+        <div class="small">Acesso Restrito</div>
       </div>
     </div>
     <div id="loginBox">
       <div id="fileWarn" class="alert danger hidden">
-        <b>Atenção:</b> Domínio não autorizado. Vá no Firebase Console > Authentication > Configurações > Domínios autorizados e adicione este link.
+        <b>Atenção:</b> Domínio não autorizado no Firebase.
       </div>
       <label class="label">E-mail</label>
       <input id="inEmail" type="email" placeholder="seu@email.com" style="margin:6px 0 12px">
@@ -201,7 +216,7 @@ a{color:var(--accent)}
     </div>
     
     <div id="firstBox" class="hidden">
-      <div class="alert">Crie sua conta. Esses dados serão usados para sincronizar os aparelhos.</div>
+      <div class="alert">Crie sua conta. Após criar, você será direcionado para a importação dos seus dados.</div>
       <label class="label">E-mail</label>
       <input id="newEmail" type="email" placeholder="seu@email.com" style="margin:6px 0 12px">
       <label class="label">Senha</label>
@@ -218,6 +233,38 @@ a{color:var(--accent)}
     <div class="deco">
       <span>∑</span><span>∫</span><span>π</span><span>φ</span><span>λ</span><span>Δ</span><span>ℏ</span><span>∇</span><span>∞</span>
     </div>
+  </div>
+</div>
+
+<!-- ================= ONBOARDING (NOVO USUÁRIO) ================= -->
+<div id="onboardingView" class="auth hidden">
+  <div class="card ornament">
+    <div class="section-title">
+      <span class="atomo"><span class="anel a1"></span><span class="anel a2"></span><span class="anel a3"></span><span class="nucleo"></span></span>
+      <div>
+        <h1>Primeiros Passos</h1>
+        <div class="small">Vamos configurar seu painel acadêmico</div>
+      </div>
+    </div>
+    
+    <p class="small">Para liberar o acesso ao painel, carregue o seu Histórico Escolar ou Matriz do Curso (PDF ou Imagem). O sistema fará a leitura, validação matemática e preencherá suas abas.</p>
+    
+    <div class="row" style="margin-top:15px">
+      <input id="inpObFile" type="file" accept=".pdf,image/*" style="flex:1">
+    </div>
+    
+    <div id="obPreviewBox" style="margin-top:10px"></div>
+    
+    <button id="btnProcessar" class="ghost" style="width:100%; margin-top:10px;">Processar Documento com OCR</button>
+    
+    <div style="margin-top:15px;">
+      <label class="label">Resultado / JSON Validável</label>
+      <textarea id="obJsonOut" style="width:100%;height:120px; margin-top:5px;" placeholder='[{"cod":"ITA122","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea>
+      <div class="small" style="margin-top:5px;">O sistema verificará se os códigos existem e se as notas estão entre 0 e 10.</div>
+    </div>
+    
+    <button id="btnValidarLiberar" class="ok" style="width:100%; margin-top:15px;">Validar Dados e Acessar Painel</button>
+    <div id="obMsg" class="small" style="margin-top:10px;color:var(--danger); text-align:center; font-weight:bold;"></div>
   </div>
 </div>
 
@@ -248,19 +295,19 @@ a{color:var(--accent)}
 
 <script>
 /* =========================================================
-   0. HELPERS BÁSICOS (MOVIDOS PARA O TOPO PARA EVITAR ERRO)
+   0. HELPERS BÁSICOS
    ========================================================= */
 const $ = (s, r=document)=>r.querySelector(s);
 const $$ = (s, r=document)=>[...r.querySelectorAll(s)];
 
-/* =========================================================
-   1. VERIFICAÇÃO DE AMBIENTE E FIREBASE
-   ========================================================= */
 if (window.location.protocol === 'file:') {
-  document.getElementById('fileWarn').innerHTML = "<b>Atenção:</b> Você está abrindo o arquivo diretamente (file://). O Firebase bloqueia o login assim. Use o Live Server ou hospede (GitHub Pages, Vercel, etc).";
+  document.getElementById('fileWarn').innerHTML = "<b>Atenção:</b> Você está abrindo o arquivo diretamente (file://).";
   document.getElementById('fileWarn').classList.remove('hidden');
 }
 
+/* =========================================================
+   1. CONFIGURAÇÃO DO FIREBASE
+   ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyAeItPDazW0k8L8J4XX375o5wXp191ImVk",
   authDomain: "painel-mf.firebaseapp.com",
@@ -428,18 +475,20 @@ const CONTEUDOS_INICIAIS = [
 let state = {
   disciplinas: {},
   horarios: {},
+  quadroHorario: {},
   semestreAtual: {disciplinas:[], avaliacoes:{}},
   simulacao: [],
   avisos: [],
   conteudos: [],
   atividades: [],
-  config: {}
+  config: {},
+  onboardingConcluido: false // Controle de novo usuário
 };
 
 let currentUser = null;
 let unsubscribeSnapshot = null;
 
-function estadoInicial(){
+function estadoInicialCaio(){
   const disc = {};
   OBRIGATORIAS.concat(OPTATIVAS).forEach(d=>{
     disc[d.cod] = {status:"pendente", nota:null, semestre:null, statusHist:"", rp:false};
@@ -449,44 +498,29 @@ function estadoInicial(){
     if(disc[cod]) disc[cod] = {status: st, nota: nota, semestre: sem, statusHist: hist, rp: rp};
   };
 
-  // --- 2024/1 ---
   setD("ITA122", "concluida", 2.06, "2024/1", "Repro Nota", true);
   setD("ITA130", "concluida", 0.00, "2024/1", "Repro Nota", true);
   setD("ITM002", "concluida", 0.74, "2024/1", "Repro Nota", true);
   setD("ITM161", "concluida", 1.47, "2024/1", "Repro Nota", true);
   setD("ITS033", "concluida", 3.23, "2024/1", "Repro Freq", true);
-  
-  // --- 2024/2 ---
   setD("ITA201", "concluida", 0.00, "2024/2", "Repro Nota", true);
   setD("ITA208", "concluida", 0.00, "2024/2", "Repro Nota", true);
   setD("ITM060", "concluida", 0.00, "2024/2", "Repro Freq", true);
-
-  // --- 2024/2 (Férias) ---
   setD("ITM002", "concluida", 7.22, "2024/2 (Férias)", "Aprovado", false); 
-
-  // --- 2025/1 ---
   setD("ITA122", "concluida", 6.00, "2025/1", "Aprovado", false); 
   setD("ITA130", "concluida", 7.33, "2025/1", "Aprovado", false); 
   setD("ITM021", "concluida", 9.25, "2025/1", "Aprovado", false);
   setD("ITM161", "concluida", 5.17, "2025/1", "Aprovado", false); 
   setD("ITC020", "concluida", 9.32, "2025/1", "Aprovado", false);
-
-  // --- 2025/2 ---
   setD("ITA104", "concluida", 0.00, "2025/2", "Repro Freq", true);
   setD("ITM018", "concluida", 8.00, "2025/2", "Aprovado", false);
   setD("ITM802", "concluida", 6.44, "2025/2", "Aprovado", false);
   setD("ITQ101", "concluida", 1.00, "2025/2", "Repro Freq", true);
-
-  // --- 2025/2 (Férias) ---
   setD("ITA131", "concluida", 7.25, "2025/2 (Férias)", "Aprovado", false);
-
-  // --- 2026/1 ---
   setD("ITA104", "concluida", 0.67, "2026/1", "Repro Nota", true); 
   setD("ITA127", "concluida", 9.00, "2026/1", "Aprovado", false);
   setD("ITM004", "concluida", 1.24, "2026/1", "Repro Nota", true);
   setD("ITM101", "concluida", 0.00, "2026/1", "Repro Freq", true);
-
-  // --- 2026/2 (Matrícula) ---
   setD("ITA104", "cursando", null, "2026/2", "Matrícula", false); 
   setD("ITA128", "cursando", null, "2026/2", "Matrícula", false);
   setD("ITA208", "cursando", null, "2026/2", "Matrícula", false); 
@@ -518,7 +552,15 @@ function estadoInicial(){
     {cod:"ITM004", nota:1.24, sem:"2026/1", rp:true},
     {cod:"ITM101", nota:0.00, sem:"2026/1", rp:true}
   ];
+  return disc;
+}
 
+function estadoInicialLimpo(){
+  const disc = {};
+  OBRIGATORIAS.concat(OPTATIVAS).forEach(d=>{
+    disc[d.cod] = {status:"pendente", nota:null, semestre:null, statusHist:"", rp:false};
+  });
+  disc._historicoTentativas = [];
   return disc;
 }
 
@@ -536,16 +578,36 @@ function iniciarSincronizacao() {
       const data = doc.data();
       if (data.state) {
         state = data.state;
+        if(!state.quadroHorario) state.quadroHorario = {};
+        if(state.onboardingConcluido === undefined) state.onboardingConcluido = false;
       }
     } else {
-      state.disciplinas = estadoInicial();
+      // Se o documento não existe, cria um novo. 
+      if (currentUser.email === "galvacaio18@gmail.com") {
+        state.disciplinas = estadoInicialCaio();
+        state.onboardingConcluido = true;
+      } else {
+        state.disciplinas = estadoInicialLimpo();
+        state.onboardingConcluido = false;
+      }
       state.conteudos = CONTEUDOS_INICIAIS.slice();
       saveState();
     }
     
-    if (document.getElementById("app").classList.contains("hidden") === false) {
-      montarAbas();
-      renderView(abaAtiva, false);
+    // Verifica se precisa mostrar o Onboarding
+    if (currentUser.email !== "galvacaio18@gmail.com" && !state.onboardingConcluido) {
+      $("#app").classList.add("hidden");
+      $("#onboardingView").classList.remove("hidden");
+      $("#authView").classList.add("hidden");
+      renderOnboarding();
+    } else {
+      $("#onboardingView").classList.add("hidden");
+      $("#app").classList.remove("hidden");
+      
+      if (document.getElementById("app").classList.contains("hidden") === false) {
+        montarAbas();
+        renderView(abaAtiva, false);
+      }
     }
   }, (error) => {
     console.error("Erro no listener:", error);
@@ -559,42 +621,39 @@ auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user;
     $("#authView").classList.add("hidden");
-    $("#app").classList.remove("hidden");
-    $("#hello").textContent = `${ALUNO.nome} · Matrícula ${ALUNO.matricula} · ${ALUNO.curso}`;
+    
+    if (user.email === "galvacaio18@gmail.com") {
+      $("#hello").textContent = `${ALUNO.nome} · Matrícula ${ALUNO.matricula} · ${ALUNO.curso}`;
+    } else {
+      const nome = user.displayName || user.email.split("@")[0];
+      $("#hello").textContent = `Olá, ${nome} · Painel Acadêmico`;
+    }
+    
     iniciarSincronizacao();
   } else {
     currentUser = null;
     $("#authView").classList.remove("hidden");
     $("#app").classList.add("hidden");
+    $("#onboardingView").classList.add("hidden");
     if (unsubscribeSnapshot) unsubscribeSnapshot();
-    $("#btnLogin").textContent = "Entrar"; // Reseta botão
-    $("#btnSaveUser").textContent = "Salvar"; // Reseta botão
+    $("#btnLogin").textContent = "Entrar";
+    $("#btnSaveUser").textContent = "Salvar";
   }
 });
 
 $("#btnLogin").onclick = () => {
   const email = $("#inEmail").value.trim();
   const pass = $("#inPass").value;
-  
-  if(!email || !pass) {
-      $("#authMsg").textContent = "Preencha e-mail e senha.";
-      return;
-  }
-
+  if(!email || !pass) return $("#authMsg").textContent = "Preencha e-mail e senha.";
   $("#btnLogin").textContent = "Entrando...";
   $("#authMsg").textContent = "";
 
   auth.signInWithEmailAndPassword(email, pass).catch((error) => {
     $("#btnLogin").textContent = "Entrar";
-    
-    // Traduzindo as mensagens de erro mais comuns do Firebase
     let msg = error.message;
     if(error.code === 'auth/user-not-found') msg = "Conta não encontrada. Clique em 'Criar conta'.";
     else if(error.code === 'auth/wrong-password') msg = "Senha incorreta.";
     else if(error.code === 'auth/invalid-credential') msg = "E-mail ou senha incorretos.";
-    else if(error.code === 'auth/unauthorized-domain') msg = "Domínio do GitHub não autorizado no Firebase (Vá em Authentication > Configurações).";
-    else if(error.code === 'auth/network-request-failed') msg = "Falha de rede. Verifique sua internet.";
-    
     $("#authMsg").textContent = "Erro: " + msg;
   });
 };
@@ -609,7 +668,6 @@ $("#btnSaveUser").onclick = () => {
   const pass = $("#newPass").value;
   const pass2 = $("#newPass2").value;
   if (pass !== pass2) return $("#regMsg").textContent = "As senhas não conferem.";
-  
   $("#btnSaveUser").textContent = "Salvando...";
   $("#regMsg").textContent = "";
 
@@ -618,8 +676,6 @@ $("#btnSaveUser").onclick = () => {
     let msg = error.message;
     if(error.code === 'auth/email-already-in-use') msg = "Este e-mail já está em uso.";
     else if(error.code === 'auth/weak-password') msg = "A senha deve ter pelo menos 6 caracteres.";
-    else if(error.code === 'auth/unauthorized-domain') msg = "Domínio do GitHub não autorizado no Firebase (Vá em Authentication > Configurações).";
-    
     $("#regMsg").textContent = "Erro: " + msg;
   });
 };
@@ -644,7 +700,127 @@ $("#btnLogout").onclick = () => {
 };
 
 /* =========================================================
-   5. CÁLCULOS E LÓGICA
+   5. LÓGICA DO ONBOARDING (NOVO USUÁRIO)
+   ========================================================= */
+function renderOnboarding() {
+  const preview = $("#obPreviewBox");
+  const jsonOut = $("#obJsonOut");
+  const msg = $("#obMsg");
+
+  $("#inpObFile").onchange = (e) => {
+    const f = e.target.files[0]; if(!f) return;
+    preview.innerHTML = "";
+    if(f.type.startsWith("image/")){
+      const img = document.createElement("img");
+      img.style.maxWidth = "100%"; img.style.borderRadius="10px"; img.style.marginTop="10px";
+      img.src = URL.createObjectURL(f);
+      preview.appendChild(img);
+    } else {
+      preview.innerHTML = `<div class="small">Arquivo carregado: ${f.name}</div>`;
+    }
+  };
+
+  $("#btnProcessar").onclick = async () => {
+    const f = $("#inpObFile").files[0];
+    if(!f) return toast("Selecione um arquivo primeiro.", "danger");
+    
+    msg.textContent = "Processando OCR... (Isso pode levar alguns segundos)";
+    try {
+      if(f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")){
+        msg.textContent = "PDF detectado. Por favor, cole o JSON manualmente na caixa abaixo.";
+        toast("Converta o PDF em imagem ou cole o JSON.", "danger");
+        return;
+      }
+      
+      // Tesseract OCR na imagem
+      const { data } = await Tesseract.recognize(f, "por");
+      const texto = data.text || "";
+      
+      msg.textContent = "OCR concluído. Revise o JSON gerado abaixo.";
+      
+      // Tentativa simples de extrair códigos e notas do texto
+      const linhas = texto.split("\n");
+      const out = [];
+      const codigos = OBRIGATORIAS.concat(OPTATIVAS).map(d=>d.cod);
+      
+      linhas.forEach(l => {
+        const cod = codigos.find(c => l.toUpperCase().includes(c));
+        if(!cod) return;
+        const nums = l.match(/\b\d{1,2}([.,]\d{1,2})?\b/g) || [];
+        let nota = null;
+        for(const n of nums){
+          const v = parseFloat(n.replace(",", "."));
+          if(v >= 0 && v <= 10){ nota = v; break; }
+        }
+        out.push({ cod, nota, status: "concluida", semestre: "Extraído" });
+      });
+      
+      if(out.length > 0) {
+        jsonOut.value = JSON.stringify(out, null, 2);
+      } else {
+        jsonOut.value = "[]";
+        msg.textContent = "Não foi possível extrair dados precisos. Cole o JSON manualmente.";
+      }
+    } catch(e) {
+      msg.textContent = "Erro no OCR: " + e.message;
+    }
+  };
+
+  $("#btnValidarLiberar").onclick = () => {
+    try {
+      const arr = JSON.parse(jsonOut.value);
+      if(!Array.isArray(arr)) throw new Error("O JSON deve ser uma lista.");
+      
+      let erros = [];
+      const disciplinasValidas = OBRIGATORIAS.concat(OPTATIVAS);
+
+      // Sistema Matemático de Comparação
+      arr.forEach((it, index) => {
+        if(!it.cod) { erros.push(`Item ${index+1}: Código ausente.`); return; }
+        const disc = disciplinasValidas.find(d => d.cod === it.cod);
+        if(!disc) { erros.push(`Item ${index+1}: Disciplina ${it.cod} não existe na matriz.`); return; }
+        
+        if(it.nota != null) {
+          const nota = Number(it.nota);
+          if(isNaN(nota) || nota < 0 || nota > 10) {
+            erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida (deve ser 0 a 10).`);
+          }
+        }
+      });
+
+      if(erros.length > 0) {
+        msg.innerHTML = "Erros encontrados na validação:<br>" + erros.join("<br>");
+        return;
+      }
+
+      // Se passou, aplica os dados
+      arr.forEach(it => {
+        state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, {
+          nota: it.nota!=null? Number(it.nota) : null,
+          status: it.status || (it.nota!=null? "concluida":"pendente"),
+          semestre: it.semestre || null,
+          rp: false
+        });
+      });
+
+      state.onboardingConcluido = true;
+      saveState();
+      
+      toast("Dados validados e importados com sucesso!");
+      $("#onboardingView").classList.add("hidden");
+      $("#app").classList.remove("hidden");
+      
+      montarAbas();
+      renderView(0);
+
+    } catch(e) {
+      msg.textContent = "Erro na leitura do JSON: " + e.message;
+    }
+  };
+}
+
+/* =========================================================
+   6. CÁLCULOS E LÓGICA DO APP
    ========================================================= */
 const fmt = n => (Math.round(n*100)/100).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
 function hojeISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
@@ -809,12 +985,13 @@ function toMin(hhmm){
 }
 
 /* =========================================================
-   6. ABAS
+   7. ABAS E VIEWS
    ========================================================= */
 const ABAS = [
   {id:"visao", ico:"📊", nome:"Visão geral"},
   {id:"matriz", ico:"📚", nome:"Matriz do curso"},
   {id:"semestre", ico:"📝", nome:"Meu semestre"},
+  {id:"horario", ico:"🕒", nome:"Quadro de Horário"},
   {id:"cr", ico:"📈", nome:"CR e notas"},
   {id:"prereq", ico:"🔗", nome:"Pré-requisitos"},
   {id:"simulador", ico:"🧪", nome:"Simulador de matrícula"},
@@ -840,8 +1017,8 @@ function montarAbas(){
 function renderView(i, scrollTop = true){
   const v = $("#views"); v.innerHTML="";
   const fn = {
-    visao:viewVisao, matriz:viewMatriz, semestre:viewSemestre, cr:viewCR,
-    prereq:viewPrereq, simulador:viewSimulador, calendario:viewCalendario,
+    visao:viewVisao, matriz:viewMatriz, semestre:viewSemestre, horario:viewHorario,
+    cr:viewCR, prereq:viewPrereq, simulador:viewSimulador, calendario:viewCalendario,
     prazos:viewPrazos, conteudos:viewConteudos, importar:viewImportar,
     atividades:viewAtividades, config:viewConfig
   }[ABAS[i].id];
@@ -849,9 +1026,6 @@ function renderView(i, scrollTop = true){
   if(scrollTop) window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* =========================================================
-   7. VIEWS
-   ========================================================= */
 function viewVisao(root){
   const p = progresso();
   const est = estimativaFormatura();
@@ -1053,14 +1227,12 @@ function viewMatriz(root){
     html += `<h3 style="margin-top:18px; color:var(--gold)">Período ${p} <span class="chip">${OBRIGATORIAS.filter(d=>d.per===p).length} disc.</span></h3>
     <div class="table-responsive">
     <table><thead><tr>
-      <th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th><th>Horário</th></tr></thead><tbody>`;
+      <th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th></tr></thead><tbody>`;
     OBRIGATORIAS.filter(d=>d.per===p).forEach(d=>{
       const reg = state.disciplinas[d.cod] || {};
       const st = reg.status || "pendente";
       const cls = st==="concluida" ? (reg.rp?"danger":"ok") : st==="cursando"?"cur":"pend";
       const label = st==="concluida" ? (reg.rp?"Reprovado":"Concluída") : st==="cursando"?"Cursando":"Pendente";
-      const hs = state.horarios[d.cod] || [];
-      const htxt = hs.map(h=>`${h.dia} ${h.ini}-${h.fim}`).join("; ");
       const isFalta = reg.statusHist === "Repro Freq";
       
       html += `<tr>
@@ -1071,7 +1243,6 @@ function viewMatriz(root){
         <td><input type="number" step="0.01" min="0" max="10" value="${isFalta? 0.00 : reg.nota??""}" ${isFalta ? 'disabled' : ''} placeholder="0-10" data-nota="${d.cod}" style="width:65px; padding:6px; text-align:center; ${isFalta?'opacity:0.5;':''}"></td>
         <td><input type="checkbox" ${reg.rp?'checked':''} data-rp="${d.cod}" style="width:20px;height:20px;accent-color:var(--danger)"></td>
         <td><input type="checkbox" ${isFalta?'checked':''} data-falta="${d.cod}" style="width:20px;height:20px;accent-color:var(--warn)"></td>
-        <td><input value="${htxt}" placeholder="Seg 19:00-20:40" data-hor="${d.cod}" style="width:120px; padding:6px;"></td>
       </tr>`;
     });
     html += `</tbody></table></div>`;
@@ -1080,14 +1251,12 @@ function viewMatriz(root){
 
   html += `<div class="card ornament" style="margin-top:16px"><div class="section-title"><span class="ico">🧩</span><h2>Optativas</h2></div>
   <div class="table-responsive">
-  <table><thead><tr><th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th><th>Horário</th></tr></thead><tbody>`;
+  <table><thead><tr><th>Disciplina</th><th>Cr.</th><th>CH</th><th>Status</th><th>Nota</th><th>RP?</th><th>Falta</th></tr></thead><tbody>`;
   OPTATIVAS.forEach(d=>{
     const reg = state.disciplinas[d.cod] || {};
     const st = reg.status || "pendente";
     const cls = st==="concluida" ? (reg.rp?"danger":"ok") : st==="cursando"?"cur":"pend";
     const label = st==="concluida" ? (reg.rp?"Reprovado":"Concluída") : st==="cursando"?"Cursando":"—";
-    const hs = state.horarios[d.cod] || [];
-    const htxt = hs.map(h=>`${h.dia} ${h.ini}-${h.fim}`).join("; ");
     const isFalta = reg.statusHist === "Repro Freq";
     
     html += `<tr>
@@ -1098,7 +1267,6 @@ function viewMatriz(root){
       <td><input type="number" step="0.01" min="0" max="10" value="${isFalta? 0.00 : reg.nota??""}" ${isFalta ? 'disabled' : ''} placeholder="0-10" data-nota="${d.cod}" style="width:65px; padding:6px; text-align:center; ${isFalta?'opacity:0.5;':''}"></td>
       <td><input type="checkbox" ${reg.rp?'checked':''} data-rp="${d.cod}" style="width:20px;height:20px;accent-color:var(--danger)"></td>
       <td><input type="checkbox" ${isFalta?'checked':''} data-falta="${d.cod}" style="width:20px;height:20px;accent-color:var(--warn)"></td>
-      <td><input value="${htxt}" placeholder="Seg 19:00-20:40" data-hor="${d.cod}" style="width:120px; padding:6px;"></td>
     </tr>`;
   });
   html += `</tbody></table></div></div>`;
@@ -1170,23 +1338,6 @@ function viewMatriz(root){
       renderView(abaAtiva, false);
     };
   });
-
-  $$("[data-hor]", root).forEach(inp=>{
-    inp.onchange = ()=>{
-      const cod = inp.dataset.hor;
-      const txt = inp.value.trim();
-      const arr = [];
-      if(txt){
-        txt.split(";").forEach(part=>{
-          const m = part.trim().match(/^(\w{3})\s+(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/i);
-          if(m) arr.push({dia:m[1].toLowerCase(), ini:m[2], fim:m[3]});
-        });
-      }
-      state.horarios[cod] = arr;
-      saveState();
-      toast("Horário salvo.");
-    };
-  });
 }
 
 function viewSemestre(root){
@@ -1253,6 +1404,89 @@ function viewSemestre(root){
     b.onclick = ()=>{
       const [cod, idx] = b.dataset.delav.split("|");
       sem.avaliacoes[cod].splice(parseInt(idx),1); saveState(); renderView(abaAtiva, false);
+    };
+  });
+}
+
+function viewHorario(root){
+  const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const horarios = ["07:00", "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00"];
+  
+  if(!state.quadroHorario) state.quadroHorario = {};
+
+  let html = `<div class="card ornament">
+    <div class="section-title"><span class="ico">🕒</span><h2>Quadro de Horário</h2></div>
+    <div class="row" style="margin-bottom:15px; background:rgba(76,201,240,.05); padding:15px; border-radius:10px;">
+      <select id="qhDisc" style="flex:2">
+        <option value="">Selecione a disciplina…</option>
+        ${OBRIGATORIAS.concat(OPTATIVAS).map(d=>`<option value="${d.nome}">${d.cod} – ${d.nome}</option>`).join("")}
+      </select>
+      <select id="qhDia" style="flex:1">
+        ${dias.map(d=>`<option value="${d}">${d}</option>`).join("")}
+      </select>
+      <input type="time" id="qhIni" style="flex:1" value="19:00">
+      <input type="time" id="qhFim" style="flex:1" value="20:40">
+      <button id="btnAddQH" style="width:auto">Adicionar</button>
+    </div>
+
+    <div class="table-responsive">
+      <div class="grade-horario">
+        <div class="grade-header" style="background:transparent; border:none;"></div>
+        ${dias.map(d => `<div class="grade-header">${d}</div>`).join("")}
+        
+        ${horarios.map(h => `
+          <div class="grade-hora">${h}</div>
+          ${dias.map(d => {
+            const aulas = Object.values(state.quadroHorario).filter(a => a.dia === d && a.ini.startsWith(h));
+            return `<div class="grade-celula">
+              ${aulas.map(a => `
+                <div style="position:relative; width:100%; height:100%;">
+                  <div class="disc-nome">${a.nome.substring(0, 15)}${a.nome.length>15?'...':''}</div>
+                  <div class="disc-hora">${a.ini} - ${a.fim}</div>
+                  <button class="btn-del" data-delqh="${a.id}">×</button>
+                </div>
+              `).join("")}
+            </div>`;
+          }).join("")}
+        `).join("")}
+      </div>
+    </div>
+    <div class="small" style="margin-top:10px; text-align:center; color:var(--muted)">
+      As aulas são plotadas com base no horário de início. A grade vai de 07:00 até 21:00.
+    </div>
+  </div>`;
+
+  root.innerHTML = html;
+
+  $("#btnAddQH", root).onclick = () => {
+    const disc = $("#qhDisc", root).value;
+    const dia = $("#qhDia", root).value;
+    const ini = $("#qhIni", root).value;
+    const fim = $("#qhFim", root).value;
+
+    if(!disc || !dia || !ini || !fim) return toast("Preencha todos os campos.", "danger");
+    if(ini >= fim) return toast("O horário de início deve ser menor que o de fim.", "danger");
+
+    const id = Date.now().toString();
+    state.quadroHorario[id] = { id, nome: disc, dia, ini, fim };
+    
+    const codDisc = OBRIGATORIAS.concat(OPTATIVAS).find(d => d.nome === disc)?.cod;
+    if(codDisc) {
+      if(!state.horarios[codDisc]) state.horarios[codDisc] = [];
+      state.horarios[codDisc].push({dia: dia.toLowerCase(), ini, fim});
+    }
+
+    saveState();
+    registrarAtividade(`Aula adicionada ao quadro: ${disc} (${dia} ${ini}-${fim})`);
+    renderView(abaAtiva, false);
+  };
+
+  $$("[data-delqh]", root).forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.delqh;
+      delete state.quadroHorario[id];
+      saveState();
+      renderView(abaAtiva, false);
     };
   });
 }
@@ -1546,14 +1780,17 @@ function viewConteudos(root){
 function viewImportar(root){
   root.innerHTML = `<div class="card imp">
     <div class="section-title"><span class="ico">📄</span><h2>Importar PDF/Imagem</h2></div>
+    <div class="alert" style="border-color:var(--accent); background:rgba(76,201,240,.05);">
+      <b>Como usar:</b> Carregue o arquivo (PDF/Imagem). O sistema fará o OCR (texto) e usará um <b>sistema matemático de comparação</b> para validar se os códigos existem na matriz e se as notas estão entre 0 e 10. Se houver erro, você será avisado.
+    </div>
     <div class="row" style="margin:12px 0">
       <input id="inpFile" type="file" accept=".pdf,image/*" style="flex:1">
       <button id="btnLimpar" class="ghost" style="width:auto">Limpar</button>
     </div>
     <div id="previewBox"></div>
-    <h3 style="margin-top:16px">JSON para importar</h3>
-    <textarea id="jsonOut" style="width:100%;height:120px" placeholder='[{"cod":"ITA201","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea>
-    <button id="btnImportarJson" class="ok" style="width:100%; margin-top:10px;">Importar JSON</button>
+    <h3 style="margin-top:16px">JSON Validado para importar</h3>
+    <textarea id="jsonOut" style="width:100%;height:150px" placeholder='[{"cod":"ITA201","nota":8.5,"status":"concluida","semestre":"2024/1"}]'></textarea>
+    <button id="btnImportarJson" class="ok" style="width:100%; margin-top:10px;">Validar e Importar JSON</button>
   </div>`;
 
   const preview = $("#previewBox", root);
@@ -1578,9 +1815,32 @@ function viewImportar(root){
   $("#btnImportarJson", root).onclick = ()=>{
     try{
       const arr = JSON.parse(jsonOut.value);
-      if(!Array.isArray(arr)) throw new Error("JSON deve ser uma lista");
+      if(!Array.isArray(arr)) throw new Error("JSON deve ser uma lista.");
+      
+      let erros = [];
+      const disciplinasValidas = OBRIGATORIAS.concat(OPTATIVAS);
+
+      arr.forEach((it, index) => {
+        if(!it.cod) { erros.push(`Item ${index+1}: Código ausente.`); return; }
+        const disc = disciplinasValidas.find(d => d.cod === it.cod);
+        if(!disc) { erros.push(`Item ${index+1}: Disciplina ${it.cod} não existe na matriz.`); return; }
+        
+        if(it.nota != null) {
+          const nota = Number(it.nota);
+          if(isNaN(nota) || nota < 0 || nota > 10) {
+            erros.push(`Item ${index+1} (${it.cod}): Nota ${it.nota} inválida (deve ser 0 a 10).`);
+          }
+        }
+      });
+
+      if(erros.length > 0) {
+        toast("Erros encontrados na validação. Veja o console.", "danger");
+        console.error("Erros de validação matemática:", erros);
+        alert("Erros encontrados:\n\n" + erros.join("\n"));
+        return;
+      }
+
       arr.forEach(it=>{
-        if(!it.cod) return;
         state.disciplinas[it.cod] = Object.assign(state.disciplinas[it.cod]||{}, {
           nota: it.nota!=null? Number(it.nota) : null,
           status: it.status || (it.nota!=null? "concluida":"pendente"),
@@ -1589,9 +1849,9 @@ function viewImportar(root){
         });
       });
       saveState();
-      toast("Histórico importado!");
+      toast("Histórico importado e validado com sucesso!");
       renderView(abaAtiva, false);
-    }catch(e){ toast("Erro: "+e.message,"danger"); }
+    }catch(e){ toast("Erro na leitura do JSON: "+e.message,"danger"); }
   };
 }
 
@@ -1611,7 +1871,11 @@ function viewConfig(root){
   root.innerHTML = `<div class="card ornament"><div class="section-title"><span class="ico">⚙️</span><h2>Configurações</h2></div>
     <div class="grid cols-2">
       <div>
-        <h3>Status da Sincronização</h3>
+        <h3>Trocar de Senha</h3>
+        <p class="small">O Firebase exige segurança. Clique abaixo para receber um link de redefinição de senha no seu e-mail.</p>
+        <button id="btnTrocarSenha" class="ok" style="width:100%;">Enviar link de troca de senha</button>
+        
+        <h3 style="margin-top:20px;">Status da Sincronização</h3>
         <div class="alert ok">
           <b>Sincronizado em tempo real!</b><br>
           Seus dados estão salvos na nuvem (Firebase). Qualquer alteração feita aqui vai aparecer automaticamente nos outros aparelhos que estiverem logados na mesma conta.
@@ -1632,12 +1896,22 @@ function viewConfig(root){
     </div>
   </div>`;
 
+  $("#btnTrocarSenha", root).onclick = () => {
+    if (!currentUser || !currentUser.email) return toast("Você precisa estar logado com e-mail.", "danger");
+    auth.sendPasswordResetEmail(currentUser.email)
+      .then(() => toast("Link enviado para " + currentUser.email, "ok"))
+      .catch((error) => toast("Erro: " + error.message, "danger"));
+  };
+
   $("#cfgExport",root).onclick = exportar;
   $("#cfgImport",root).onchange = (e)=>importar(e);
   $("#btnZerar",root).onclick = ()=>{
     if(confirm("Apagar TODOS os dados? Esta ação não pode ser desfeita.")){
-      state.disciplinas = estadoInicial();
+      if (currentUser.email === "galvacaio18@gmail.com") state.disciplinas = estadoInicialCaio();
+      else state.disciplinas = estadoInicialLimpo();
+      
       state.horarios = {};
+      state.quadroHorario = {};
       state.semestreAtual = {disciplinas:[], avaliacoes:{}};
       state.avisos = [];
       state.atividades = [];
