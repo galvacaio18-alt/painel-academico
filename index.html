@@ -126,7 +126,7 @@ a{color:var(--accent)}
 .preview{max-width:100%; max-height:360px; border-radius:12px; border:1px solid var(--line); margin-top:10px; box-shadow:0 10px 26px rgba(0,0,0,.4)}
 .deco{display:flex; justify-content:space-around; align-items:center; gap:10px; margin:14px 0 0; padding:12px; border-top:1px dashed rgba(120,160,255,.18); font-family:'Cambria Math','Times New Roman',serif; color:rgba(160,190,255,.35); font-size:14px; flex-wrap:wrap;}
 
-/* GRADE DE HORÁRIOS ATUALIZADA */
+/* GRADE DE HORÁRIOS */
 .grade-horario { display: grid; grid-template-columns: 65px repeat(6, 1fr); gap: 6px; margin-top: 10px; min-width: 850px;}
 .grade-header { background: #101a36; padding: 10px; text-align: center; font-weight: 700; font-size: 13px; border-radius: 6px; border: 1px solid var(--line); color: var(--accent);}
 .grade-hora { background: #0a1228; padding: 10px; text-align: center; font-size: 12px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center;}
@@ -391,7 +391,8 @@ function estadoInicialLimpo(){
 
 function saveState() {
   if (!currentUser) return;
-  db.collection("users").doc(currentUser.uid).set({ state: state }, { merge: true }).catch(err => console.error("Erro ao salvar no Firebase:", err));
+  // CORREÇÃO: Removido o { merge: true } para permitir que a deleção de itens (como horários) seja efetivada no banco.
+  db.collection("users").doc(currentUser.uid).set({ state: state }).catch(err => console.error("Erro ao salvar no Firebase:", err));
 }
 
 function iniciarSincronizacao() {
@@ -869,7 +870,7 @@ function viewHorario(root){
   const horarios = ["07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"];
   if(!state.quadroHorario) state.quadroHorario = {};
 
-  // Sanitização para remover duplicatas que já possam estar salvas no banco
+  // Sanitização (limpa duplicatas caso existam no banco)
   const uniqueKeys = new Set();
   Object.keys(state.quadroHorario).forEach(id => {
     const a = state.quadroHorario[id];
@@ -881,7 +882,6 @@ function viewHorario(root){
     }
   });
 
-  // Lógica de sobreposição
   function aulaNoSlot(a, h){
     const ini = toMin(a.ini), fim = toMin(a.fim);
     const rs = toMin(h), re = rs + 60;
@@ -912,9 +912,7 @@ function viewHorario(root){
           ${horarios.map(h => `
             <div class="grade-hora">${h}</div>
             ${dias.map(d => {
-              // Filtra aulas no slot e garante que não haja renderização dupla por ID
               const aulas = Object.values(state.quadroHorario).filter(a => a.dia === d && aulaNoSlot(a, h));
-              
               return `<div class="grade-celula">${aulas.map(a => {
                 const localStr = [a.piso ? `Piso ${a.piso}` : "", a.bloco ? `Bloco ${a.bloco}` : "", a.sala ? `Sala ${a.sala}` : ""].filter(Boolean).join(" · ");
                 return `<div class="aula-bloco">
@@ -944,7 +942,6 @@ function viewHorario(root){
     if (!cod || !dia || !ini || !fim) return toast("Preencha disciplina, dia e horários.", "danger");
     if (toMin(ini) >= toMin(fim)) return toast("O horário de início deve ser menor que o de fim.", "danger");
 
-    // Impede cadastro duplicado
     const existente = Object.values(state.quadroHorario).find(a => a.cod === cod && a.dia === dia && a.ini === ini && a.fim === fim);
     if (existente) return toast("Essa aula já está cadastrada nesse dia e horário.", "danger");
 
@@ -954,7 +951,6 @@ function viewHorario(root){
     const id = Date.now().toString();
     state.quadroHorario[id] = { id, cod, nome: def.nome, dia, ini, fim, piso, bloco, sala };
 
-    // Atualiza state.horarios para o simulador de conflito
     if (!state.horarios[cod]) state.horarios[cod] = [];
     state.horarios[cod].push({ dia: dia.toLowerCase(), ini, fim });
 
@@ -972,7 +968,12 @@ function viewHorario(root){
         const h = state.horarios[aula.cod] || [];
         state.horarios[aula.cod] = h.filter(x => !(x.dia === aula.dia.toLowerCase() && x.ini === aula.ini && x.fim === aula.fim));
       }
-      delete state.quadroHorario[id];
+      
+      // Cria um NOVO objeto para forçar a atualização correta no Firebase
+      const novoQuadro = { ...state.quadroHorario };
+      delete novoQuadro[id];
+      state.quadroHorario = novoQuadro;
+      
       saveState();
       renderView(abaAtiva, false);
     };
@@ -1024,16 +1025,59 @@ function viewCalendario(root){
 }
 
 function viewPrazos(root){
-  let html = `<div class="card cal"><div class="section-title"><span class="ico">⏰</span><h2>Prazos e avisos</h2></div><div class="row" style="margin-bottom:12px"><input id="avTitulo" placeholder="Título do aviso" style="flex:1"><input id="avData" type="date" style="width:130px"><button id="btnAddAviso" style="width:auto">+</button></div><div id="listaAvisos"></div></div>`;
+  let html = `<div class="card cal">
+    <div class="section-title"><span class="ico">⏰</span><h2>Prazos e avisos</h2></div>
+    <div class="row" style="margin-bottom:12px; gap: 8px;">
+      <input id="avTitulo" placeholder="Título do aviso" style="flex:2; min-width:150px;">
+      <input id="avData" type="date" style="flex:1; min-width:130px;">
+      <input id="avHora" type="time" style="flex:1; min-width:110px;">
+      <input id="avLocal" placeholder="Local / Onde realizar" style="flex:2; min-width:150px;">
+      <button id="btnAddAviso" style="width:auto">+</button>
+    </div>
+    <div id="listaAvisos"></div>
+  </div>`;
   root.innerHTML = html;
 
   function renderAvisos(){
-    const box = $("#listaAvisos", root); if(!state.avisos.length){ box.innerHTML = `<div class="small">Vazio.</div>`; return; }
+    const box = $("#listaAvisos", root);
+    if(!state.avisos.length){ box.innerHTML = `<div class="small">Nenhum aviso cadastrado.</div>`; return; }
     const ord = [...state.avisos].sort((a,b)=>a.data.localeCompare(b.data));
-    box.innerHTML = ord.map(a=>{ const dias = diffDias(a.data); const cls = dias<0?"ok":dias<=3?"danger":dias<=7?"":"pend"; return `<div class="alert ${cls}" style="display:flex;justify-content:space-between;align-items:center;"><div><b>${a.titulo}</b><br><span class="small">${a.data.split("-").reverse().join("/")} · ${dias}d</span></div><button class="danger" data-delaviso="${a.id}" style="padding:6px 10px; width:auto;">X</button></div>`; }).join("");
-    $$("[data-delaviso]", box).forEach(b=>{ b.onclick = ()=>{ state.avisos = state.avisos.filter(x=>x.id!==b.dataset.delaviso); saveState(); renderAvisos(); }; });
+    box.innerHTML = ord.map(a => {
+      const dias = diffDias(a.data);
+      const cls = dias < 0 ? "ok" : dias <= 3 ? "danger" : dias <= 7 ? "" : "pend";
+      return `<div class="alert ${cls}" style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <b>${a.titulo}</b><br>
+          <span class="small">📅 ${a.data.split("-").reverse().join("/")} ${a.hora ? "às " + a.hora : ""} · ${dias}d</span><br>
+          ${a.local ? `<span class="small">📍 Local: ${a.local}</span>` : ""}
+        </div>
+        <button class="danger" data-delaviso="${a.id}" style="padding:6px 10px; width:auto; margin-left:10px;">X</button>
+      </div>`;
+    }).join("");
+    
+    $$("[data-delaviso]", box).forEach(b => {
+      b.onclick = () => {
+        state.avisos = state.avisos.filter(x => x.id !== b.dataset.delaviso);
+        saveState();
+        renderAvisos();
+      };
+    });
   }
-  $("#btnAddAviso", root).onclick = ()=>{ const t=$("#avTitulo",root).value.trim(), d=$("#avData",root).value; if(!t||!d) return toast("Preencha título e data.","danger"); state.avisos.push({id:"av"+Date.now(), titulo:t, data:d, prio:"normal"}); saveState(); renderAvisos(); $("#avTitulo",root).value=""; $("#avData",root).value=""; };
+  
+  $("#btnAddAviso", root).onclick = () => {
+    const t = $("#avTitulo", root).value.trim();
+    const d = $("#avData", root).value;
+    const h = $("#avHora", root).value;
+    const l = $("#avLocal", root).value.trim();
+    if(!t || !d) return toast("Preencha o título e a data.","danger");
+    state.avisos.push({ id:"av"+Date.now(), titulo:t, data:d, hora:h, local:l, prio:"normal" });
+    saveState();
+    renderAvisos();
+    $("#avTitulo", root).value="";
+    $("#avData", root).value="";
+    $("#avHora", root).value="";
+    $("#avLocal", root).value="";
+  };
   renderAvisos();
 }
 
